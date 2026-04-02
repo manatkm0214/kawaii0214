@@ -16,9 +16,9 @@ export default function PrivacyPolicy() {
               本アプリケーションは、家計管理をシンプルかつ効果的にするための家計簿アプリです。毎日の収支記録から月間・年間レポートの自動生成、Claude AIによる財務分析まで、あなたの家計を多角的に支援します。
             </p>
             <div className="text-sm text-slate-400 space-y-1">
-              <p>🎯 <strong>目的</strong>: 家計の可視化と賢い家計管理</p>
-              <p>👥 <strong>対象</strong>: 家計を管理したいすべての人</p>
-              <p>🔒 <strong>方針</strong>: プライバシーを最優先に設計</p>
+              <p>🎯 <span className="font-semibold">目的</span>: 家計の可視化と賢い家計管理</p>
+              <p>👥 <span className="font-semibold">対象</span>: 家計を管理したいすべての人</p>
+              <p>🔒 <span className="font-semibold">方針</span>: プライバシーを最優先に設計</p>
             </div>
           </div>
 
