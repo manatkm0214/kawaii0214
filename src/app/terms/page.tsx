@@ -10,6 +10,18 @@ export default function TermsOfService() {
         <p className="text-slate-400 mb-8">最終更新: 2026年4月2日</p>
 
         <div className="space-y-6 text-slate-300">
+          <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-4 mb-4">
+            <h2 className="text-lg font-semibold text-white mb-2">📌 本アプリについて</h2>
+            <p className="text-sm text-slate-300 mb-3">
+              本アプリケーションは、家計管理をシンプルかつ効果的にするための家計簿アプリです。毎日の収支記録から月間・年間レポートの自動生成、Claude AIによる財務分析まで、あなたの家計を多角的に支援します。
+            </p>
+            <div className="text-sm text-slate-400 space-y-1">
+              <p>🎯 <strong>目的</strong>: 家計の可視化と賢い家計管理</p>
+              <p>👥 <strong>対象</strong>: 家計を管理したいすべての人</p>
+              <p>⚖️ <strong>方針</strong>: ユーザーの利益を第一に誠実に運営</p>
+            </div>
+          </div>
+
           <section>
             <h2 className="text-2xl font-bold text-white mb-4">1. はじめに</h2>
             <p>

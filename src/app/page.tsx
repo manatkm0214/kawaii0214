@@ -373,6 +373,49 @@ function AuthView({ onAuth }: { onAuth: () => void }) {
           <p className="text-5xl mb-3">💰</p>
           <h1 className="text-2xl font-bold text-white">家計簿アプリ</h1>
           <p className="text-slate-300 text-sm mt-1">AIと一緒に賢く管理</p>
+          
+          {/* アプリの説明 */}
+          <div className="mt-6 text-left">
+            <p className="text-xs text-slate-400 mb-3">📌 こんな人におすすめ</p>
+            <div className="space-y-2 text-xs text-slate-300 mb-4">
+              <div className="flex gap-2">
+                <span>✓</span>
+                <span>毎月の家計を把握したい</span>
+              </div>
+              <div className="flex gap-2">
+                <span>✓</span>
+                <span>予算をしっかり管理したい</span>
+              </div>
+              <div className="flex gap-2">
+                <span>✓</span>
+                <span>AI分析で支出の改善点を知りたい</span>
+              </div>
+              <div className="flex gap-2">
+                <span>✓</span>
+                <span>将来の収支予測を立てたい</span>
+              </div>
+            </div>
+            
+            <p className="text-xs text-slate-400 mb-3">⚡ 主な機能</p>
+            <div className="space-y-2 text-xs text-slate-300">
+              <div className="flex gap-2">
+                <span>💳</span>
+                <span>日々の収支を簡単に記録</span>
+              </div>
+              <div className="flex gap-2">
+                <span>📊</span>
+                <span>グラフで支出パターンを可視化</span>
+              </div>
+              <div className="flex gap-2">
+                <span>🤖</span>
+                <span>Claude AIがあなたの家計を分析</span>
+              </div>
+              <div className="flex gap-2">
+                <span>📈</span>
+                <span>月間・年間レポートで未来予測</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-6 space-y-4">
