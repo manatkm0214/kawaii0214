@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import Link from "next/link"
 import Image from "next/image"
 import type { User } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
@@ -544,6 +545,21 @@ function AuthView({ onAuth }: { onAuth: () => void }) {
               </button>
             </div>
           )}
+        </div>
+
+        {/* フッター */}
+        <div className="text-center text-xs text-slate-500 space-y-2 mt-6 pt-4 border-t border-slate-700">
+          <p>
+            <Link href="/privacy" className="hover:text-slate-300 underline underline-offset-2">
+              プライバシーポリシー
+            </Link>
+            {' '}
+            <span>·</span>
+            {' '}
+            <Link href="/terms" className="hover:text-slate-300 underline underline-offset-2">
+              利用規約
+            </Link>
+          </p>
         </div>
       </div>
     </div>
