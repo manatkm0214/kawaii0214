@@ -149,6 +149,7 @@ function AuthView({ onAuth, onBack }: { onAuth: () => void; onBack?: () => void 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [signupMessage, setSignupMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
 
   async function handlePasswordLogin() {
     await handleSubmit()
@@ -331,7 +332,7 @@ function AuthView({ onAuth, onBack }: { onAuth: () => void; onBack?: () => void 
       }
       onAuth()
     } else {
-      const { error } = await supabase.auth.signUp({
+      const { data: signUpData, error } = await supabase.auth.signUp({
         email: normalizedEmail,
         password,
         options: {
@@ -346,13 +347,21 @@ function AuthView({ onAuth, onBack }: { onAuth: () => void; onBack?: () => void 
         if (message.includes("Password should")) message = "パスワードは8文字以上で、英字と数字を含む必要があります"
         if (message.includes("invalid email")) message = "有効なメールアドレスを入力してください"
         if (message.includes("validation failed")) message = "入力内容を確認してください。特にパスワードは英字と数字を含む8文字以上が必要です"
-        alert("登録失敗: " + toFriendlyAuthErrorMessage(message))
+        setSignupMessage({ type: "error", text: toFriendlyAuthErrorMessage(message) })
         return
       }
-      alert("登録完了！ログインしてください")
+      // メール確認不要の場合はセッションが即座に発行される
+      if (signUpData.session) {
+        onAuth()
+        return
+      }
+      // メール確認が必要な場合 → ログインタブに切り替え・メールアドレスを保持
       setIsLogin(true)
-      setEmail("")
-      setPassword("")
+      // パスワードはクリアしない → ログインボタンをすぐ押せる
+      setSignupMessage({
+        type: "success",
+        text: "確認メールを送信しました。メール内のリンクをクリックして認証を完了してください。認証後は下のボタンでログインできます。",
+      })
     }
   }
 
@@ -430,7 +439,7 @@ function AuthView({ onAuth, onBack }: { onAuth: () => void; onBack?: () => void 
             {(["ログイン", "新規登録"] as const).map((label, i) => (
               <button
                 key={label}
-                onClick={() => setIsLogin(i === 0)}
+                onClick={() => { setIsLogin(i === 0); setSignupMessage(null) }}
                 className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
                   (i === 0) === isLogin ? "bg-violet-600 text-white" : "text-slate-300"
                 }`}
@@ -439,6 +448,16 @@ function AuthView({ onAuth, onBack }: { onAuth: () => void; onBack?: () => void 
               </button>
             ))}
           </div>
+
+          {signupMessage && (
+            <div className={`rounded-xl px-4 py-3 text-xs leading-relaxed ${
+              signupMessage.type === "success"
+                ? "bg-emerald-900/50 border border-emerald-700/60 text-emerald-200"
+                : "bg-red-900/50 border border-red-700/60 text-red-200"
+            }`}>
+              {signupMessage.text}
+            </div>
+          )}
 
           <input
             type="email"
