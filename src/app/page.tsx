@@ -150,6 +150,9 @@ function AuthView({ onAuth, onBack, initialMessage }: { onAuth: (nextUser?: User
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [signupMessage, setSignupMessage] = useState<{ type: "success" | "error"; text: string } | null>(initialMessage ?? null)
+  const [otpCode, setOtpCode] = useState("")
+  const [otpRequested, setOtpRequested] = useState(false)
+  const [lineAuthUrl, setLineAuthUrl] = useState<string | null>(null)
 
   async function handlePasswordLogin() {
     await handleSubmit()
@@ -232,8 +235,64 @@ function AuthView({ onAuth, onBack, initialMessage }: { onAuth: (nextUser?: User
     setSignupMessage({ type: "success", text: `${normalizedEmail} にログイン用リンクを送信しました。受信メールをご確認ください。` })
   }
 
+  async function handleSendOtpCode() {
+    const normalizedEmail = email.trim().toLowerCase()
+
+    if (!normalizedEmail) {
+      setSignupMessage({ type: "error", text: "メールアドレスを入力してからワンタイムコード送信を押してください" })
+      return
+    }
+
+    setLoading(true)
+    const { error } = await createClient().auth.signInWithOtp({
+      email: normalizedEmail,
+      options: {
+        shouldCreateUser: false,
+      },
+    })
+    setLoading(false)
+
+    if (error) {
+      setSignupMessage({ type: "error", text: toFriendlyAuthErrorMessage(error.message) })
+      return
+    }
+
+    setOtpRequested(true)
+    setSignupMessage({ type: "success", text: `${normalizedEmail} にワンタイムコードを送信しました。メールの6桁コードを入力してログインしてください。` })
+  }
+
+  async function handleOtpVerify() {
+    const normalizedEmail = email.trim().toLowerCase()
+    const token = otpCode.trim()
+
+    if (!normalizedEmail) {
+      setSignupMessage({ type: "error", text: "メールアドレスを入力してください" })
+      return
+    }
+    if (!token) {
+      setSignupMessage({ type: "error", text: "ワンタイムコードを入力してください" })
+      return
+    }
+
+    setLoading(true)
+    const { data, error } = await createClient().auth.verifyOtp({
+      email: normalizedEmail,
+      token,
+      type: "email",
+    })
+    setLoading(false)
+
+    if (error) {
+      setSignupMessage({ type: "error", text: "ワンタイムコード認証に失敗しました。最新のコードを確認してください。" })
+      return
+    }
+
+    await onAuth(data.user ?? data.session?.user ?? null)
+  }
+
   async function handleLineLogin() {
     setSignupMessage(null)
+    setLineAuthUrl(null)
     setLoading(true)
     const callbackUrl = getAuthCallbackUrl()
     const { data, error } = await createClient().auth.signInWithOAuth({
@@ -256,31 +315,11 @@ function AuthView({ onAuth, onBack, initialMessage }: { onAuth: (nextUser?: User
       return
     }
 
-    window.location.assign(data.url)
-  }
-
-  async function handleDemoLogin() {
-    const demoEmail = process.env.NEXT_PUBLIC_DEMO_EMAIL?.trim()
-    const demoPassword = process.env.NEXT_PUBLIC_DEMO_PASSWORD?.trim()
-
-    if (!demoEmail || !demoPassword) {
-      setSignupMessage({ type: "error", text: "デモログインが設定されていません" })
-      return
-    }
-
-    setLoading(true)
-    const { data, error } = await createClient().auth.signInWithPassword({
-      email: demoEmail,
-      password: demoPassword,
-    })
+    setLineAuthUrl(data.url)
+    setSignupMessage({ type: "success", text: "LINEログイン画面へ移動します。PCでは遷移先でQR表示が出る場合があります。開かない場合は下のリンクを押してください。" })
     setLoading(false)
 
-    if (error) {
-      setSignupMessage({ type: "error", text: toFriendlyAuthErrorMessage(error.message) })
-      return
-    }
-
-    await onAuth(data.session?.user ?? data.user ?? null)
+    window.location.assign(data.url)
   }
 
   async function handleSubmit() {
@@ -536,6 +575,39 @@ function AuthView({ onAuth, onBack, initialMessage }: { onAuth: (nextUser?: User
             </button>
           )}
           {isLogin && (
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={handleSendOtpCode}
+                disabled={loading}
+                className="w-full py-2 text-xs text-slate-300 hover:text-white underline underline-offset-2 disabled:opacity-50"
+              >
+                ワンタイムコードをメールで受け取る
+              </button>
+              {otpRequested && (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="6桁コード"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                    className="entry-input flex-1 bg-slate-900 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleOtpVerify}
+                    disabled={loading || otpCode.length < 6}
+                    className="px-3 py-2 rounded-xl text-xs bg-violet-600 hover:bg-violet-500 disabled:opacity-50"
+                  >
+                    コード認証
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          {isLogin && (
             <button
               type="button"
               onClick={handleLineLogin}
@@ -548,15 +620,13 @@ function AuthView({ onAuth, onBack, initialMessage }: { onAuth: (nextUser?: User
               LINEでログイン
             </button>
           )}
-          {isLogin && (
-            <button
-              type="button"
-              onClick={handleDemoLogin}
-              disabled={loading}
-              className="w-full py-2 text-xs text-slate-400 hover:text-white underline underline-offset-2 disabled:opacity-50"
+          {isLogin && lineAuthUrl && (
+            <a
+              href={lineAuthUrl}
+              className="block w-full py-2 text-center text-xs text-slate-300 hover:text-white underline underline-offset-2"
             >
-              デモアカウントでログイン
-            </button>
+              LINEログイン画面が開かない場合はこちら
+            </a>
           )}
         </div>
 
