@@ -39,6 +39,11 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
     "教育": "3",
     "その他": "2",
   })
+  const [accentPreset, setAccentPreset] = useState<"balanced" | "defense" | "growth">(() => {
+    if (typeof window === "undefined") return "balanced"
+    const saved = window.localStorage.getItem("kakeibo-accent")
+    return saved === "defense" || saved === "growth" || saved === "balanced" ? saved : "balanced"
+  })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null)
 
@@ -52,6 +57,13 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
 
   function clampPercent(value: string): number {
     return Math.min(100, Math.max(0, Number(value || 0)))
+  }
+
+  function applyAccent(next: "balanced" | "defense" | "growth") {
+    setAccentPreset(next)
+    if (typeof window === "undefined") return
+    window.localStorage.setItem("kakeibo-accent", next)
+    document.documentElement.setAttribute("data-accent", next)
   }
 
   async function handleCreateProfile() {
@@ -136,6 +148,8 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
 
       if (typeof window !== "undefined") {
         window.localStorage.setItem("kakeibo-savings-goal", String(Math.round(normalizedSavingsGoal || 0)))
+        window.localStorage.setItem("kakeibo-accent", accentPreset)
+        document.documentElement.setAttribute("data-accent", accentPreset)
       }
 
       setMessage({ type: "success", text: "初期設定を保存しました" })
@@ -147,6 +161,7 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
 
   function applyPreset(name: "balanced" | "defense" | "growth") {
     if (name === "balanced") {
+      applyAccent("balanced")
       setFixedRate("35")
       setVariableRate("25")
       setSavingsRate("20")
@@ -154,12 +169,14 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
       return
     }
     if (name === "defense") {
+      applyAccent("defense")
       setFixedRate("33")
       setVariableRate("20")
       setSavingsRate("30")
       setCategoryAllocation({ "住居": "38", "食費": "18", "水道光熱": "10", "通信": "6", "交通": "8", "日用品": "8", "娯楽": "5", "教育": "3", "その他": "4" })
       return
     }
+    applyAccent("growth")
     setFixedRate("30")
     setVariableRate("25")
     setSavingsRate("30")
@@ -222,14 +239,26 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
         />
 
         <div className="grid grid-cols-3 gap-2">
-          <button type="button" onClick={() => applyPreset("balanced")} className="py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl hover:border-violet-500">
+          <button type="button" onClick={() => applyPreset("balanced")} className={`py-2 text-xs bg-slate-900 border rounded-xl ${accentPreset === "balanced" ? "border-violet-500 text-violet-300" : "border-slate-700 hover:border-violet-500"}`}>
             バランス
           </button>
-          <button type="button" onClick={() => applyPreset("defense")} className="py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl hover:border-violet-500">
+          <button type="button" onClick={() => applyPreset("defense")} className={`py-2 text-xs bg-slate-900 border rounded-xl ${accentPreset === "defense" ? "border-emerald-500 text-emerald-300" : "border-slate-700 hover:border-emerald-500"}`}>
             守り重視
           </button>
-          <button type="button" onClick={() => applyPreset("growth")} className="py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl hover:border-violet-500">
+          <button type="button" onClick={() => applyPreset("growth")} className={`py-2 text-xs bg-slate-900 border rounded-xl ${accentPreset === "growth" ? "border-amber-500 text-amber-300" : "border-slate-700 hover:border-amber-500"}`}>
             成長重視
+          </button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <button type="button" onClick={() => applyAccent("balanced")} className={`py-2 text-xs rounded-xl border ${accentPreset === "balanced" ? "bg-violet-600/20 border-violet-500" : "bg-slate-900 border-slate-700"}`}>
+            色:バランス
+          </button>
+          <button type="button" onClick={() => applyAccent("defense")} className={`py-2 text-xs rounded-xl border ${accentPreset === "defense" ? "bg-emerald-600/20 border-emerald-500" : "bg-slate-900 border-slate-700"}`}>
+            色:守り
+          </button>
+          <button type="button" onClick={() => applyAccent("growth")} className={`py-2 text-xs rounded-xl border ${accentPreset === "growth" ? "bg-amber-600/20 border-amber-500" : "bg-slate-900 border-slate-700"}`}>
+            色:成長
           </button>
         </div>
 

@@ -15,10 +15,18 @@ const UNITS = [
   { label: "万円", factor: 10000 },
 ]
 
+const STEPS = [
+  { label: "1", value: 1 },
+  { label: "10", value: 10 },
+  { label: "100", value: 100 },
+  { label: "1000", value: 1000 },
+]
+
 export default function InputForm({ onSuccess, recentTransactions }: Props) {
   const [tab, setTab] = useState<TabType>("expense")
   const [amount, setAmount] = useState("")
   const [unit, setUnit] = useState(1)
+  const [amountStep, setAmountStep] = useState(1)
   const [category, setCategory] = useState("")
   const [memo, setMemo] = useState("")
   const [payment, setPayment] = useState("カード")
@@ -117,9 +125,28 @@ export default function InputForm({ onSuccess, recentTransactions }: Props) {
       </div>
 
       {/* 金額 */}
+      <div>
+        <p className="text-xs text-slate-500 mb-1.5">入力ステップ（円）</p>
+        <div className="flex gap-1">
+          {STEPS.map(s => (
+            <button
+              key={s.value}
+              onClick={() => setAmountStep(s.value)}
+              className={`px-3 py-2 rounded-lg text-xs border transition-all ${
+                amountStep === s.value ? "bg-violet-600 border-violet-500 text-white" : "border-slate-700 text-slate-400"
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="flex gap-2">
         <input
           type="number"
+          step={amountStep}
+          min={0}
           placeholder="金額"
           value={amount}
           onChange={e => setAmount(e.target.value)}

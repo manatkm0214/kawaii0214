@@ -53,3 +53,47 @@ html[data-theme="light"] [class*="text-slate-4"],
 html[data-theme="light"] [class*="text-slate-3"] {
   color: #334155 !important;
 }
+
+html[data-accent="defense"] .bg-violet-600,
+html[data-accent="defense"] .hover\:bg-violet-500:hover,
+html[data-accent="defense"] .hover\:bg-violet-600:hover {
+  background-color: #059669 !important;
+}
+
+html[data-accent="defense"] .bg-violet-700,
+html[data-accent="defense"] .hover\:bg-violet-600:hover {
+  background-color: #047857 !important;
+}
+
+html[data-accent="defense"] .border-violet-500,
+html[data-accent="defense"] .focus\:border-violet-500:focus,
+html[data-accent="defense"] .focus\:border-violet-400:focus {
+  border-color: #10b981 !important;
+}
+
+html[data-accent="defense"] .text-violet-400,
+html[data-accent="defense"] .text-violet-300 {
+  color: #10b981 !important;
+}
+
+html[data-accent="growth"] .bg-violet-600,
+html[data-accent="growth"] .hover\:bg-violet-500:hover,
+html[data-accent="growth"] .hover\:bg-violet-600:hover {
+  background-color: #d97706 !important;
+}
+
+html[data-accent="growth"] .bg-violet-700,
+html[data-accent="growth"] .hover\:bg-violet-600:hover {
+  background-color: #b45309 !important;
+}
+
+html[data-accent="growth"] .border-violet-500,
+html[data-accent="growth"] .focus\:border-violet-500:focus,
+html[data-accent="growth"] .focus\:border-violet-400:focus {
+  border-color: #f59e0b !important;
+}
+
+html[data-accent="growth"] .text-violet-400,
+html[data-accent="growth"] .text-violet-300 {
+  color: #f59e0b !important;
+}
