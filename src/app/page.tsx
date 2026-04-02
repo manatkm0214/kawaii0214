@@ -179,10 +179,18 @@ function AuthView({ onAuth }: { onAuth: () => void }) {
   }
 
   async function handleGoogleLogin() {
+    await handleOAuthLogin("google")
+  }
+
+  async function handleGithubLogin() {
+    await handleOAuthLogin("github")
+  }
+
+  async function handleOAuthLogin(provider: "google" | "github") {
     setLoading(true)
     const callbackUrl = getAuthCallbackUrl()
     const { data, error } = await createClient().auth.signInWithOAuth({
-      provider: "google",
+      provider,
       options: {
         redirectTo: callbackUrl,
         skipBrowserRedirect: true,
@@ -191,17 +199,61 @@ function AuthView({ onAuth }: { onAuth: () => void }) {
 
     if (error) {
       setLoading(false)
-      alert("Googleログイン失敗: " + toFriendlyAuthErrorMessage(error.message))
+      const label = provider === "google" ? "Google" : "GitHub"
+      alert(`${label}ログイン失敗: ${toFriendlyAuthErrorMessage(error.message)}`)
       return
     }
 
     if (!data?.url) {
       setLoading(false)
-      alert("GoogleログインURLの取得に失敗しました")
+      const label = provider === "google" ? "Google" : "GitHub"
+      alert(`${label}ログインURLの取得に失敗しました`)
       return
     }
 
     window.location.assign(data.url)
+  }
+
+  async function handleDemoLogin() {
+    const demoEmail = process.env.NEXT_PUBLIC_DEMO_EMAIL?.trim()
+    const demoPassword = process.env.NEXT_PUBLIC_DEMO_PASSWORD?.trim()
+
+    if (!demoEmail || !demoPassword) {
+      alert("デモログインが未設定です。NEXT_PUBLIC_DEMO_EMAIL / NEXT_PUBLIC_DEMO_PASSWORD を設定してください。")
+      return
+    }
+
+    setLoading(true)
+    const { error } = await createClient().auth.signInWithPassword({
+      email: demoEmail,
+      password: demoPassword,
+    })
+    setLoading(false)
+
+    if (error) {
+      alert("デモログイン失敗: " + toFriendlyAuthErrorMessage(error.message))
+      return
+    }
+
+    onAuth()
+  }
+
+  async function handleGuestLogin() {
+    setLoading(true)
+    const { error } = await createClient().auth.signInAnonymously()
+    setLoading(false)
+
+    if (error) {
+      const raw = error.message.toLowerCase()
+      if (raw.includes("anonymous") && raw.includes("disabled")) {
+        alert("ゲストログインが無効です。SupabaseのAuthentication > ProvidersでAnonymousを有効にしてください。")
+        return
+      }
+      alert("ゲストログイン失敗: " + toFriendlyAuthErrorMessage(error.message))
+      return
+    }
+
+    onAuth()
   }
 
   async function handleSubmit() {
@@ -386,6 +438,36 @@ function AuthView({ onAuth }: { onAuth: () => void }) {
               className="w-full py-2 text-xs text-slate-300 hover:text-white underline underline-offset-2 disabled:opacity-50"
             >
               Googleでログイン
+            </button>
+          )}
+          {isLogin && (
+            <button
+              type="button"
+              onClick={handleGithubLogin}
+              disabled={loading}
+              className="w-full py-2 text-xs text-slate-300 hover:text-white underline underline-offset-2 disabled:opacity-50"
+            >
+              GitHubでログイン
+            </button>
+          )}
+          {isLogin && (
+            <button
+              type="button"
+              onClick={handleGuestLogin}
+              disabled={loading}
+              className="w-full py-2 text-xs text-slate-300 hover:text-white underline underline-offset-2 disabled:opacity-50"
+            >
+              ゲストでお試しログイン
+            </button>
+          )}
+          {isLogin && (
+            <button
+              type="button"
+              onClick={handleDemoLogin}
+              disabled={loading}
+              className="w-full py-2 text-xs text-slate-300 hover:text-white underline underline-offset-2 disabled:opacity-50"
+            >
+              デモアカウントでログイン
             </button>
           )}
         </div>
