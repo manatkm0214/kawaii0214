@@ -293,25 +293,29 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
           <button
             type="button"
             onClick={() => setStrategyMode("standard")}
-            className={`text-xs py-2 rounded-lg border transition-all ${strategyMode === "standard" ? "bg-violet-600 border-violet-500 text-white" : "border-slate-700 text-slate-300"}`}
+            className={`text-[11px] py-2 rounded-lg border transition-all ${strategyMode === "standard" ? "bg-violet-600 border-violet-500 text-white" : "border-slate-700 text-slate-300"}`}
           >
-            経済標準
+            経済標準/バランス
           </button>
           <button
             type="button"
             onClick={() => setStrategyMode("inflation")}
-            className={`text-xs py-2 rounded-lg border transition-all ${strategyMode === "inflation" ? "bg-violet-600 border-violet-500 text-white" : "border-slate-700 text-slate-300"}`}
+            className={`text-[11px] py-2 rounded-lg border transition-all ${strategyMode === "inflation" ? "bg-violet-600 border-violet-500 text-white" : "border-slate-700 text-slate-300"}`}
           >
-            物価高対策
+            物価高対策/守り重視
           </button>
           <button
             type="button"
             onClick={() => setStrategyMode("deficit")}
-            className={`text-xs py-2 rounded-lg border transition-all ${strategyMode === "deficit" ? "bg-violet-600 border-violet-500 text-white" : "border-slate-700 text-slate-300"}`}
+            className={`text-[11px] py-2 rounded-lg border transition-all ${strategyMode === "deficit" ? "bg-violet-600 border-violet-500 text-white" : "border-slate-700 text-slate-300"}`}
           >
-            赤字改善
+            赤字改善/成長重視
           </button>
         </div>
+
+        <p className="text-[11px] text-slate-500">
+          余裕ありは「経済標準」、余裕が薄いときは「物価高対策」、赤字が続くときは「赤字改善」を選択。
+        </p>
 
         <div className="rounded-xl border border-slate-700 bg-slate-900/40 p-3 text-xs text-slate-300 space-y-1">
           <p className="font-semibold text-slate-200">{policyTargets.title}</p>

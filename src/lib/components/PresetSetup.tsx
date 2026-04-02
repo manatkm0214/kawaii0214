@@ -289,26 +289,30 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
         </div>
 
         <div className="grid grid-cols-3 gap-2">
-          <button type="button" onClick={() => applyPreset("balanced")} className={`py-2 text-xs bg-slate-900 border rounded-xl ${accentPreset === "balanced" ? "border-violet-500 text-violet-300" : "border-slate-700 hover:border-violet-500"}`}>
-            経済標準
+          <button type="button" onClick={() => applyPreset("balanced")} className={`py-2 text-[11px] bg-slate-900 border rounded-xl ${accentPreset === "balanced" ? "border-violet-500 text-violet-300" : "border-slate-700 hover:border-violet-500"}`}>
+            経済標準/バランス
           </button>
-          <button type="button" onClick={() => applyPreset("defense")} className={`py-2 text-xs bg-slate-900 border rounded-xl ${accentPreset === "defense" ? "border-emerald-500 text-emerald-300" : "border-slate-700 hover:border-emerald-500"}`}>
-            物価高対策
+          <button type="button" onClick={() => applyPreset("defense")} className={`py-2 text-[11px] bg-slate-900 border rounded-xl ${accentPreset === "defense" ? "border-emerald-500 text-emerald-300" : "border-slate-700 hover:border-emerald-500"}`}>
+            物価高対策/守り重視
           </button>
-          <button type="button" onClick={() => applyPreset("growth")} className={`py-2 text-xs bg-slate-900 border rounded-xl ${accentPreset === "growth" ? "border-amber-500 text-amber-300" : "border-slate-700 hover:border-amber-500"}`}>
-            赤字改善
+          <button type="button" onClick={() => applyPreset("growth")} className={`py-2 text-[11px] bg-slate-900 border rounded-xl ${accentPreset === "growth" ? "border-amber-500 text-amber-300" : "border-slate-700 hover:border-amber-500"}`}>
+            赤字改善/成長重視
           </button>
         </div>
 
+        <p className="text-[11px] text-slate-500">
+          余裕あり: 経済標準/バランス ・ 余裕が薄い: 物価高対策/守り重視 ・ 余裕がない: 赤字改善/成長重視
+        </p>
+
         <div className="grid grid-cols-3 gap-2">
-          <button type="button" onClick={() => applyAccent("balanced")} className={`py-2 text-xs rounded-xl border ${accentPreset === "balanced" ? "bg-violet-600/20 border-violet-500" : "bg-slate-900 border-slate-700"}`}>
-            色:バランス
+          <button type="button" onClick={() => applyAccent("balanced")} className={`py-2 text-[11px] rounded-xl border ${accentPreset === "balanced" ? "bg-violet-600/20 border-violet-500" : "bg-slate-900 border-slate-700"}`}>
+            色:経済標準
           </button>
-          <button type="button" onClick={() => applyAccent("defense")} className={`py-2 text-xs rounded-xl border ${accentPreset === "defense" ? "bg-emerald-600/20 border-emerald-500" : "bg-slate-900 border-slate-700"}`}>
-            色:守り
+          <button type="button" onClick={() => applyAccent("defense")} className={`py-2 text-[11px] rounded-xl border ${accentPreset === "defense" ? "bg-emerald-600/20 border-emerald-500" : "bg-slate-900 border-slate-700"}`}>
+            色:物価高
           </button>
-          <button type="button" onClick={() => applyAccent("growth")} className={`py-2 text-xs rounded-xl border ${accentPreset === "growth" ? "bg-amber-600/20 border-amber-500" : "bg-slate-900 border-slate-700"}`}>
-            色:成長
+          <button type="button" onClick={() => applyAccent("growth")} className={`py-2 text-[11px] rounded-xl border ${accentPreset === "growth" ? "bg-amber-600/20 border-amber-500" : "bg-slate-900 border-slate-700"}`}>
+            色:赤字改善
           </button>
         </div>
 

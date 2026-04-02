@@ -616,6 +616,12 @@ export default function Home() {
     setAccent(prev => (prev === "balanced" ? "defense" : prev === "defense" ? "growth" : "balanced"))
   }
 
+  const accentLabel = accent === "balanced"
+    ? "経済標準/バランス"
+    : accent === "defense"
+      ? "物価高対策/守り重視"
+      : "赤字改善/成長重視"
+
   const syncSessionToHome = useCallback(async (nextUser?: User | null) => {
     if (nextUser) {
       setUser(nextUser)
@@ -812,7 +818,7 @@ export default function Home() {
           onClick={cycleAccent}
           className="fixed top-14 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
         >
-          色:{accent === "balanced" ? "バランス" : accent === "defense" ? "守り" : "成長"}
+          色:{accentLabel}
         </button>
         <div className="min-h-screen bg-slate-950 flex items-center justify-center">
           <p className="text-slate-400 animate-pulse">読み込み中...</p>
@@ -837,7 +843,7 @@ export default function Home() {
             onClick={cycleAccent}
             className="fixed top-14 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
           >
-            色:{accent === "balanced" ? "バランス" : accent === "defense" ? "守り" : "成長"}
+            色:{accentLabel}
           </button>
           <WelcomeView onStartAuth={() => setShowAuthView(true)} />
         </>
@@ -857,7 +863,7 @@ export default function Home() {
           onClick={cycleAccent}
           className="fixed top-14 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
         >
-          色:{accent === "balanced" ? "バランス" : accent === "defense" ? "守り" : "成長"}
+          色:{accentLabel}
         </button>
         <AuthView onAuth={syncSessionToHome} onBack={() => setShowAuthView(false)} />
       </>
@@ -879,7 +885,7 @@ export default function Home() {
           onClick={cycleAccent}
           className="fixed top-14 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
         >
-          色:{accent === "balanced" ? "バランス" : accent === "defense" ? "守り" : "成長"}
+          色:{accentLabel}
         </button>
         <PresetSetup mode="create" onComplete={(nextProfile) => {
           setProfile(nextProfile)
@@ -905,7 +911,7 @@ export default function Home() {
           onClick={cycleAccent}
           className="fixed top-14 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
         >
-          色:{accent === "balanced" ? "バランス" : accent === "defense" ? "守り" : "成長"}
+          色:{accentLabel}
         </button>
         <PresetSetup
           mode="edit"
@@ -939,7 +945,7 @@ export default function Home() {
         onClick={cycleAccent}
         className="fixed top-14 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
       >
-        色:{accent === "balanced" ? "バランス" : accent === "defense" ? "守り" : "成長"}
+        色:{accentLabel}
       </button>
       {/* ヘッダー */}
       <header className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur border-b border-slate-800 no-print">
