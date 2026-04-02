@@ -98,6 +98,9 @@ export default function InputForm({ onSuccess, recentTransactions }: Props) {
 
     setLoading(false)
     if (error) { alert("保存失敗: " + error.message); return }
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem("kakeibo-just-saved", "1")
+    }
     onSuccess(data)
     setAmount("")
     setMemo("")

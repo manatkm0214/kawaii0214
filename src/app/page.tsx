@@ -95,10 +95,10 @@ function buildLoginPasswordCandidates(rawPassword: string): string[] {
 // ─── Auth View ──────────────────────────────────────────────────────────────
 function WelcomeView({ onStartAuth }: { onStartAuth: () => void }) {
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+    <div className="entry-screen min-h-screen bg-slate-950 flex items-center justify-center p-4">
       <div className="w-full max-w-sm space-y-5 animate-slide-up">
         <div className="text-center">
-          <div className="mx-auto mb-3 w-20 h-20 rounded-2xl overflow-hidden border border-slate-700/60 bg-slate-900/70">
+          <div className="entry-logo-box mx-auto mb-3 w-20 h-20 rounded-2xl overflow-hidden border border-slate-700/60 bg-slate-900/70">
             <Image
               src="/logo-kakeibo.svg"
               alt="家計簿アプリ ロゴ"
@@ -111,7 +111,7 @@ function WelcomeView({ onStartAuth }: { onStartAuth: () => void }) {
           <p className="text-slate-300 text-sm mt-1">AIと一緒に賢く管理</p>
         </div>
 
-        <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-6 space-y-4">
+        <div className="entry-panel bg-slate-800/60 border border-slate-700/50 rounded-2xl p-6 space-y-4">
           <p className="text-sm text-slate-200 leading-relaxed">
             支出の記録、予算管理、将来予測までを1つにまとめた家計管理アプリです。
           </p>
@@ -367,10 +367,10 @@ function AuthView({ onAuth, onBack }: { onAuth: (nextUser?: User | null) => Prom
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+    <div className="entry-screen min-h-screen bg-slate-950 flex items-center justify-center p-4">
       <div className="w-full max-w-sm space-y-5 animate-slide-up">
         <div className="text-center">
-          <div className="mx-auto mb-3 w-16 h-16 rounded-2xl overflow-hidden border border-slate-700/60 bg-slate-900/70">
+          <div className="entry-logo-box mx-auto mb-3 w-16 h-16 rounded-2xl overflow-hidden border border-slate-700/60 bg-slate-900/70">
             <Image
               src="/logo-kakeibo.svg"
               alt="家計簿アプリ ロゴ"
@@ -426,7 +426,7 @@ function AuthView({ onAuth, onBack }: { onAuth: (nextUser?: User | null) => Prom
           </div>
         </div>
 
-        <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-6 space-y-4">
+        <div className="entry-panel bg-slate-800/60 border border-slate-700/50 rounded-2xl p-6 space-y-4">
           {onBack && (
             <button
               type="button"
@@ -436,7 +436,7 @@ function AuthView({ onAuth, onBack }: { onAuth: (nextUser?: User | null) => Prom
               ← 戻る
             </button>
           )}
-          <div className="flex bg-slate-900 rounded-xl p-1">
+          <div className="entry-tab-strip flex bg-slate-900 rounded-xl p-1">
             {(["ログイン", "新規登録"] as const).map((label, i) => (
               <button
                 key={label}
@@ -465,7 +465,7 @@ function AuthView({ onAuth, onBack }: { onAuth: (nextUser?: User | null) => Prom
             placeholder="メールアドレス"
             value={email}
             onChange={e => setEmail(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400"
+            className="entry-input w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400"
           />
           <div>
             <input
@@ -474,7 +474,7 @@ function AuthView({ onAuth, onBack }: { onAuth: (nextUser?: User | null) => Prom
               value={password}
               onChange={e => setPassword(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handlePasswordLogin()}
-              className="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400"
+              className="entry-input w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400"
             />
             {!isLogin && password && (
               <div className="text-xs text-slate-400 mt-2 space-y-1">
@@ -900,12 +900,12 @@ export default function Home() {
 
           {/* 月切替（dashboardとchartsで表示） */}
           {(navPage === "dashboard" || navPage === "charts") && (
-            <div className="flex items-center gap-1">
-              <button onClick={prevMonth} className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">◀</button>
-              <button onClick={goToday} className={`text-xs px-2 py-1 rounded-lg transition-all ${isCurrentMonth ? "text-white bg-violet-600/30" : "text-slate-300 hover:text-white hover:bg-slate-800"}`}>
+            <div className="month-switch-group flex items-center gap-1">
+              <button onClick={prevMonth} className="month-switch-arrow p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">◀</button>
+              <button onClick={goToday} className={`month-switch-current text-xs px-2 py-1 rounded-lg transition-all ${isCurrentMonth ? "text-white bg-violet-600/30" : "text-slate-300 hover:text-white hover:bg-slate-800"}`}>
                 {monthLabel}
               </button>
-              <button onClick={nextMonth} className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">▶</button>
+              <button onClick={nextMonth} className="month-switch-arrow p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">▶</button>
             </div>
           )}
 

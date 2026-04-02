@@ -19,6 +19,10 @@ function safeLevel(savingRate: number): { level: string; color: string; bar: num
 }
 
 export default function Dashboard({ transactions, budgets, currentMonth, profile }: Props) {
+  const [highlightAfterSave, setHighlightAfterSave] = useState(() => {
+    if (typeof window === "undefined") return false
+    return window.sessionStorage.getItem("kakeibo-just-saved") === "1"
+  })
   const [monthlySavingsGoal] = useState(() => {
     if (typeof window === "undefined") return 0
     const raw = window.localStorage.getItem("kakeibo-savings-goal")
@@ -37,6 +41,17 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
     if (typeof window === "undefined") return
     window.localStorage.setItem("kakeibo-strategy-mode", strategyMode)
   }, [strategyMode])
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !highlightAfterSave) return
+    window.sessionStorage.removeItem("kakeibo-just-saved")
+
+    const timeoutId = window.setTimeout(() => {
+      setHighlightAfterSave(false)
+    }, 500)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [highlightAfterSave])
 
   const stats = useMemo(() => {
     const monthly = transactions.filter(t => t.date.startsWith(currentMonth))
@@ -235,11 +250,14 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
   ]
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-4">
       {/* 基本4指標 */}
       <div className="grid grid-cols-2 gap-3">
-        {cards.map(c => (
-          <div key={c.label} className={`bg-linear-to-br ${c.color} border border-slate-700/50 rounded-2xl p-4`}>
+        {cards.map((c, index) => (
+          <div
+            key={c.label}
+            className={`bg-linear-to-br ${c.color} border border-slate-700/50 rounded-2xl p-4 dashboard-reveal dashboard-delay-${Math.min(index + 1, 6)} ${highlightAfterSave ? "animate-success-bounce" : ""}`}
+          >
             <p className="text-xs text-slate-400 mb-1">{c.label}</p>
             <p className={`text-xl font-bold ${c.text}`}>{formatCurrency(c.value)}</p>
           </div>

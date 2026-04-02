@@ -362,7 +362,7 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
         {message && (
           <div className={`rounded-xl px-4 py-3 text-xs leading-relaxed ${
             message.type === "success"
-              ? "bg-emerald-900/50 border border-emerald-700/60 text-emerald-200"
+              ? "bg-emerald-900/50 border border-emerald-700/60 text-emerald-200 animate-success-bounce"
               : "bg-red-900/50 border border-red-700/60 text-red-200"
           }`}>
             {message.text}
