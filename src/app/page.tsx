@@ -93,7 +93,54 @@ function buildLoginPasswordCandidates(rawPassword: string): string[] {
 }
 
 // ─── Auth View ──────────────────────────────────────────────────────────────
-function AuthView({ onAuth }: { onAuth: () => void }) {
+function WelcomeView({ onStartAuth }: { onStartAuth: () => void }) {
+  return (
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+      <div className="w-full max-w-sm space-y-5 animate-slide-up">
+        <div className="text-center">
+          <div className="mx-auto mb-3 w-20 h-20 rounded-2xl overflow-hidden border border-slate-700/60 bg-slate-900/70">
+            <Image
+              src="/logo-kakeibo.svg"
+              alt="家計簿アプリ ロゴ"
+              width={80}
+              height={80}
+              priority
+            />
+          </div>
+          <h1 className="text-2xl font-bold text-white">家計簿アプリ</h1>
+          <p className="text-slate-300 text-sm mt-1">AIと一緒に賢く管理</p>
+        </div>
+
+        <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-6 space-y-4">
+          <p className="text-sm text-slate-200 leading-relaxed">
+            支出の記録、予算管理、将来予測までを1つにまとめた家計管理アプリです。
+          </p>
+          <ul className="text-xs text-slate-300 space-y-2 list-disc list-inside">
+            <li>日々の収支をかんたん入力</li>
+            <li>グラフとレポートで家計を見える化</li>
+            <li>AI分析で改善アクションを提案</li>
+          </ul>
+          <button
+            type="button"
+            onClick={onStartAuth}
+            className="w-full py-3 bg-violet-600 hover:bg-violet-500 rounded-xl font-bold transition-all text-white"
+          >
+            ログイン / 新規登録へ進む
+          </button>
+          <div className="text-center text-xs text-slate-500">
+            <Link href="/privacy" className="hover:text-slate-300 underline underline-offset-2">プライバシーポリシー</Link>
+            {' '}
+            <span>·</span>
+            {' '}
+            <Link href="/terms" className="hover:text-slate-300 underline underline-offset-2">利用規約</Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AuthView({ onAuth, onBack }: { onAuth: () => void; onBack?: () => void }) {
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -427,6 +474,15 @@ function AuthView({ onAuth }: { onAuth: () => void }) {
         </div>
 
         <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-6 space-y-4">
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="text-xs text-slate-300 hover:text-white underline underline-offset-2"
+            >
+              ← 戻る
+            </button>
+          )}
           <div className="flex bg-slate-900 rounded-xl p-1">
             {(["ログイン", "新規登録"] as const).map((label, i) => (
               <button
@@ -627,6 +683,7 @@ export default function Home() {
   const [authLoading, setAuthLoading] = useState(true)
   const [dataLoading, setDataLoading] = useState(false)
   const [needsSetup, setNeedsSetup] = useState(false)
+  const [showAuthView, setShowAuthView] = useState(false)
 
   // 月切替
   const [currentMonth, setCurrentMonth] = useState(() => {
@@ -788,7 +845,10 @@ export default function Home() {
   }
 
   if (!user) {
-    return <AuthView onAuth={() => { /* useEffect が自動検知 */ }} />
+    if (!showAuthView) {
+      return <WelcomeView onStartAuth={() => setShowAuthView(true)} />
+    }
+    return <AuthView onAuth={() => { /* useEffect が自動検知 */ }} onBack={() => setShowAuthView(false)} />
   }
 
   if (needsSetup) {
