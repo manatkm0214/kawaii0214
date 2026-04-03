@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import type { Profile } from "@/lib/utils"
 
@@ -66,6 +66,32 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null)
 
+  useEffect(() => {
+    const savedTakeHome = Number(takeHome || 0)
+    if (savedTakeHome > 0 && takeHomeUnit === 1) {
+      if (savedTakeHome >= 100000) {
+        setTakeHomeUnit(10000)
+        setTakeHome(String(Math.round((savedTakeHome / 10000) * 10) / 10))
+      } else if (savedTakeHome >= 1000) {
+        setTakeHomeUnit(1000)
+        setTakeHome(String(Math.round((savedTakeHome / 1000) * 10) / 10))
+      }
+    }
+
+    const savedGoal = Number(monthlySavingsGoal || 0)
+    if (savedGoal > 0 && savingsGoalUnit === 1) {
+      if (savedGoal >= 100000) {
+        setSavingsGoalUnit(10000)
+        setMonthlySavingsGoal(String(Math.round((savedGoal / 10000) * 10) / 10))
+      } else if (savedGoal >= 1000) {
+        setSavingsGoalUnit(1000)
+        setMonthlySavingsGoal(String(Math.round((savedGoal / 1000) * 10) / 10))
+      }
+    }
+    // 初回表示時のみ単位を補正
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const strategyLabel = useMemo(() => {
     if (accentPreset === "balanced") return "経済標準/バランス"
     if (accentPreset === "defense") return "物価高対策/守り重視"
@@ -89,6 +115,32 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
     if (typeof window === "undefined") return
     window.localStorage.setItem("kakeibo-accent", next)
     document.documentElement.setAttribute("data-accent", next)
+  }
+
+  function switchTakeHomeUnit(nextUnit: number) {
+    if (nextUnit === takeHomeUnit) return
+    const raw = Number(takeHome || 0)
+    if (!Number.isFinite(raw) || raw <= 0) {
+      setTakeHomeUnit(nextUnit)
+      return
+    }
+    const normalized = raw * takeHomeUnit
+    const converted = normalized / nextUnit
+    setTakeHome(String(Math.round(converted * 10) / 10))
+    setTakeHomeUnit(nextUnit)
+  }
+
+  function switchSavingsGoalUnit(nextUnit: number) {
+    if (nextUnit === savingsGoalUnit) return
+    const raw = Number(monthlySavingsGoal || 0)
+    if (!Number.isFinite(raw) || raw <= 0) {
+      setSavingsGoalUnit(nextUnit)
+      return
+    }
+    const normalized = raw * savingsGoalUnit
+    const converted = normalized / nextUnit
+    setMonthlySavingsGoal(String(Math.round(converted * 10) / 10))
+    setSavingsGoalUnit(nextUnit)
   }
 
   async function handleCreateProfile() {
@@ -427,7 +479,7 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
                 <button
                   key={u.label}
                   type="button"
-                  onClick={() => setTakeHomeUnit(u.factor)}
+                  onClick={() => switchTakeHomeUnit(u.factor)}
                   className={`px-3 py-3 rounded-xl text-xs border transition-all ${
                     takeHomeUnit === u.factor
                       ? "bg-violet-600 border-violet-500 text-white"
@@ -458,7 +510,7 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
                 <button
                   key={u.label}
                   type="button"
-                  onClick={() => setSavingsGoalUnit(u.factor)}
+                  onClick={() => switchSavingsGoalUnit(u.factor)}
                   className={`px-3 py-3 rounded-xl text-xs border transition-all ${
                     savingsGoalUnit === u.factor
                       ? "bg-violet-600 border-violet-500 text-white"

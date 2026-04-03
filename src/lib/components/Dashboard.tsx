@@ -3,6 +3,12 @@
 import { Transaction, Budget, Profile, formatCurrency } from "@/lib/utils"
 import { useEffect, useMemo, useState } from "react"
 
+const MONEY_UNITS = [
+  { label: "円", factor: 1 },
+  { label: "千円", factor: 1000 },
+  { label: "万円", factor: 10000 },
+] as const
+
 interface Props {
   transactions: Transaction[]
   budgets: Budget[]
@@ -37,11 +43,22 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
       ? saved
       : "standard"
   })
+  const [moneyUnit, setMoneyUnit] = useState<1 | 1000 | 10000>(() => {
+    if (typeof window === "undefined") return 10000
+    const raw = Number(window.localStorage.getItem("kakeibo-money-unit") || 10000)
+    if (raw === 1 || raw === 1000 || raw === 10000) return raw
+    return 10000
+  })
 
   useEffect(() => {
     if (typeof window === "undefined") return
     window.localStorage.setItem("kakeibo-strategy-mode", strategyMode)
   }, [strategyMode])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    window.localStorage.setItem("kakeibo-money-unit", String(moneyUnit))
+  }, [moneyUnit])
 
   useEffect(() => {
     if (typeof window === "undefined" || !highlightAfterSave) return
@@ -276,6 +293,15 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
 
   const defenseMinimum = Math.round(stats.expense * 3)
   const defenseTarget = Math.round(stats.expense * 6)
+  const defenseShortfall = Math.max(0, defenseTarget - stats.defenseFund)
+  const defenseProgress = defenseTarget > 0 ? Math.min(100, Math.round((stats.defenseFund / defenseTarget) * 100)) : 0
+
+  function formatByUnit(value: number): string {
+    const unitLabel = moneyUnit === 1 ? "円" : moneyUnit === 1000 ? "千円" : "万円"
+    const scaled = value / moneyUnit
+    const text = Number.isInteger(scaled) ? String(scaled) : scaled.toFixed(1)
+    return `${text}${unitLabel}`
+  }
 
   const forecastSavings = useMemo(() => {
     const monthlySavingsActual = stats.saving + stats.investment
@@ -318,6 +344,34 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
               設定を開く
             </button>
           )}
+        </div>
+      </div>
+
+      <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4 space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold text-slate-300">💴 手取り・貯金目標</h3>
+          <div className="flex gap-1">
+            {MONEY_UNITS.map((u) => (
+              <button
+                key={u.label}
+                type="button"
+                onClick={() => setMoneyUnit(u.factor as 1 | 1000 | 10000)}
+                className={`px-2 py-1 rounded-lg text-[11px] border ${moneyUnit === u.factor ? "bg-violet-600 border-violet-500 text-white" : "border-slate-700 text-slate-300"}`}
+              >
+                {u.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+          <div className="rounded-xl border border-slate-700 bg-slate-900/40 p-3">
+            <p className="text-slate-400">手取り（設定値）</p>
+            <p className="text-sm font-semibold text-slate-200">{formatByUnit(allocation.takeHome)}</p>
+          </div>
+          <div className="rounded-xl border border-slate-700 bg-slate-900/40 p-3">
+            <p className="text-slate-400">毎月の貯金目標</p>
+            <p className="text-sm font-semibold text-slate-200">{monthlySavingsGoal > 0 ? formatByUnit(monthlySavingsGoal) : "未設定"}</p>
+          </div>
         </div>
       </div>
 
@@ -582,6 +636,19 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
             </span>
           </div>
         ))}
+      </div>
+
+      <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4 space-y-2">
+        <h3 className="text-sm font-semibold text-slate-300">🛡 防衛資金目安</h3>
+        <p className="text-xs text-slate-400">
+          目安: 生活費の3〜6か月分（最低 {formatCurrency(defenseMinimum)} / 推奨 {formatCurrency(defenseTarget)}）
+        </p>
+        <p className={`text-sm font-semibold ${defenseShortfall > 0 ? "text-amber-300" : "text-emerald-300"}`}>
+          現在 {formatCurrency(stats.defenseFund)} / 不足 {formatCurrency(defenseShortfall)}
+        </p>
+        <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+          <div className={`h-2 ${defenseProgress >= 100 ? "bg-emerald-500" : "bg-amber-500"}`} style={{ width: `${defenseProgress}%` }} />
+        </div>
       </div>
 
       {/* 予算進捗 */}
