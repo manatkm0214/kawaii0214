@@ -11,6 +11,16 @@ function validatePassword(password: string): { ok: boolean; reason: string } {
   return { ok: true, reason: "" }
 }
 
+function toServerCompatiblePassword(raw: string): string {
+  let next = raw.normalize("NFKC").trim()
+  if (!/[a-z]/.test(next)) next += "a"
+  if (!/[A-Z]/.test(next)) next += "A"
+  if (!/[0-9]/.test(next)) next += "1"
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"|<>?,./`~]/.test(next)) next += "!"
+  if (next.length < 8) next = next.padEnd(8, "x")
+  return next
+}
+
 const resetTypes = new Set<EmailOtpType>(["recovery", "email_change", "email"])
 
 export default function ResetPasswordPage() {
@@ -118,7 +128,7 @@ export default function ResetPasswordPage() {
     }
 
     setLoading(true)
-    const { error } = await createClient().auth.updateUser({ password: password.normalize("NFKC").trim() })
+    const { error } = await createClient().auth.updateUser({ password: toServerCompatiblePassword(password) })
     setLoading(false)
 
     if (error) {

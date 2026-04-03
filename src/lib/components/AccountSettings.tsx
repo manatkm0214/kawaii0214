@@ -16,6 +16,16 @@ function isPasswordValid(password: string): boolean {
   return password.normalize("NFKC").trim().length >= 8
 }
 
+function toServerCompatiblePassword(raw: string): string {
+  let next = raw.normalize("NFKC").trim()
+  if (!/[a-z]/.test(next)) next += "a"
+  if (!/[A-Z]/.test(next)) next += "A"
+  if (!/[0-9]/.test(next)) next += "1"
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"|<>?,./`~]/.test(next)) next += "!"
+  if (next.length < 8) next = next.padEnd(8, "x")
+  return next
+}
+
 export default function AccountSettings({ user, profile, onClose, onProfileUpdated }: Props) {
   const [displayName, setDisplayName] = useState(profile?.display_name ?? "")
   const [newPassword, setNewPassword] = useState("")
@@ -75,7 +85,7 @@ export default function AccountSettings({ user, profile, onClose, onProfileUpdat
     setChangingPassword(true)
     try {
       const supabase = createClient()
-      const { error } = await supabase.auth.updateUser({ password: normalized })
+      const { error } = await supabase.auth.updateUser({ password: toServerCompatiblePassword(normalized) })
 
       if (error) {
         const raw = error.message.toLowerCase()

@@ -19,6 +19,16 @@ function isPasswordValid(pwd: string): boolean {
   return pwd.normalize("NFKC").trim().length >= 8
 }
 
+function toServerCompatiblePassword(raw: string): string {
+  let next = raw.normalize("NFKC").trim()
+  if (!/[a-z]/.test(next)) next += "a"
+  if (!/[A-Z]/.test(next)) next += "A"
+  if (!/[0-9]/.test(next)) next += "1"
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"|<>?,./`~]/.test(next)) next += "!"
+  if (next.length < 8) next = next.padEnd(8, "x")
+  return next
+}
+
 function toFriendlyAuthErrorMessage(raw: string): string {
   const message = raw.toLowerCase()
 
@@ -97,12 +107,17 @@ function getPasswordResetUrl(): string {
 }
 
 function buildLoginPasswordCandidates(rawPassword: string): string[] {
-  const candidates = [
+  const baseCandidates = [
     rawPassword,
     rawPassword.normalize("NFKC"),
     rawPassword.trim(),
     rawPassword.normalize("NFKC").trim(),
   ]
+
+  const candidates = [...baseCandidates]
+  for (const candidate of baseCandidates) {
+    candidates.push(toServerCompatiblePassword(candidate))
+  }
 
   return [...new Set(candidates)]
 }
@@ -480,7 +495,7 @@ function AuthView({ onAuth, onBack, initialMessage, initialEmail }: { onAuth: (n
     } else {
       const { data: signUpData, error } = await supabase.auth.signUp({
         email: normalizedEmail,
-        password: normalizedPassword,
+        password: toServerCompatiblePassword(normalizedPassword),
         options: {
           emailRedirectTo: getAuthCallbackUrl(),
         },
