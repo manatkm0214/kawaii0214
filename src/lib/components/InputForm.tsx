@@ -34,6 +34,7 @@ export default function InputForm({ onSuccess, recentTransactions }: Props) {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0])
   const [loading, setLoading] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
+  const [savedFlash, setSavedFlash] = useState(false)
 
   const tabs: { key: TabType; label: string; emoji: string }[] = [
     { key: "income", label: "収入", emoji: "💰" },
@@ -105,19 +106,23 @@ export default function InputForm({ onSuccess, recentTransactions }: Props) {
     setAmount("")
     setMemo("")
     setCategory("")
+    setSavedFlash(true)
+    setTimeout(() => setSavedFlash(false), 2000)
   }
 
   const currentCategories = CATEGORIES[tab === "fixed" ? "expense" : (tab as keyof typeof CATEGORIES)] ?? []
 
   return (
-    <div className="space-y-4 animate-slide-up">
+    <div className="animate-slide-up flex flex-col gap-2">
+
       {/* タブ */}
       <div className="flex gap-1 bg-slate-800 p-1 rounded-xl">
         {tabs.map(t => (
           <button
             key={t.key}
+            type="button"
             onClick={() => { setTab(t.key); setCategory("") }}
-            className={`flex-1 flex flex-col items-center py-2 rounded-lg text-xs transition-all ${
+            className={`flex-1 flex flex-col items-center py-1.5 rounded-lg text-xs transition-all ${
               tab === t.key ? "bg-violet-600 text-white" : "text-slate-400 hover:text-slate-200"
             }`}
           >
@@ -127,25 +132,8 @@ export default function InputForm({ onSuccess, recentTransactions }: Props) {
         ))}
       </div>
 
-      {/* 金額 */}
-      <div>
-        <p className="text-xs text-slate-500 mb-1.5">入力ステップ（円）</p>
-        <div className="flex gap-1">
-          {STEPS.map(s => (
-            <button
-              key={s.value}
-              onClick={() => setAmountStep(s.value)}
-              className={`px-3 py-2 rounded-lg text-xs border transition-all ${
-                amountStep === s.value ? "bg-violet-600 border-violet-500 text-white" : "border-slate-700 text-slate-400"
-              }`}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex gap-2">
+      {/* 金額 + 単位 */}
+      <div className="flex gap-1">
         <input
           type="number"
           step={amountStep}
@@ -153,71 +141,85 @@ export default function InputForm({ onSuccess, recentTransactions }: Props) {
           placeholder="金額"
           value={amount}
           onChange={e => setAmount(e.target.value)}
-          className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-lg font-bold focus:outline-none focus:border-violet-500"
+          className="flex-1 min-w-0 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-lg font-bold focus:outline-none focus:border-violet-500"
         />
-        <div className="flex gap-1">
-          {UNITS.map(u => (
-            <button
-              key={u.label}
-              onClick={() => setUnit(u.factor)}
-              className={`px-3 py-3 rounded-xl text-sm font-medium transition-all ${
-                unit === u.factor ? "bg-violet-600 text-white" : "bg-slate-800 text-slate-400 border border-slate-700"
-              }`}
-            >
-              {u.label}
-            </button>
-          ))}
-        </div>
+        {UNITS.map(u => (
+          <button
+            key={u.label}
+            type="button"
+            onClick={() => setUnit(u.factor)}
+            className={`px-2 py-2 rounded-xl text-xs font-medium transition-all shrink-0 ${
+              unit === u.factor ? "bg-violet-600 text-white" : "bg-slate-800 text-slate-400 border border-slate-700"
+            }`}
+          >
+            {u.label}
+          </button>
+        ))}
+      </div>
+
+      {/* 入力ステップ */}
+      <div className="flex gap-1">
+        {STEPS.map(s => (
+          <button
+            key={s.value}
+            type="button"
+            onClick={() => setAmountStep(s.value)}
+            className={`flex-1 py-1 rounded-lg text-xs border transition-all ${
+              amountStep === s.value ? "bg-violet-600 border-violet-500 text-white" : "border-slate-700 text-slate-400"
+            }`}
+          >
+            {s.label}
+          </button>
+        ))}
       </div>
 
       {/* メモ & AIカテゴリ推測 */}
-      <div className="flex gap-2">
+      <div className="flex gap-1">
         <input
           type="text"
           placeholder="メモ（例：スーパー、電車代）"
           value={memo}
           onChange={e => setMemo(e.target.value)}
-          className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-500"
+          className="flex-1 min-w-0 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-500"
         />
         <button
+          type="button"
           onClick={aiGuessCategory}
           disabled={aiLoading || !memo}
-          className="px-3 py-3 bg-violet-700 hover:bg-violet-600 disabled:opacity-40 rounded-xl text-sm transition-all"
+          className="px-3 py-2 bg-violet-700 hover:bg-violet-600 disabled:opacity-40 rounded-xl text-sm transition-all shrink-0"
           title="AIがカテゴリを推測"
         >
           {aiLoading ? "⏳" : "🤖"}
         </button>
       </div>
 
-      {/* よく使うカテゴリ */}
-      {recentCategories.length > 0 && (
-        <div>
-          <p className="text-xs text-slate-500 mb-1.5">🕐 最近使ったカテゴリ</p>
-          <div className="flex flex-wrap gap-1.5">
-            {recentCategories.map(c => (
-              <button
-                key={c}
-                onClick={() => setCategory(c)}
-                className={`px-3 py-1 rounded-full text-xs border transition-all ${
-                  category === c ? "bg-violet-600 border-violet-500 text-white" : "border-slate-600 text-slate-400 hover:border-slate-400"
-                }`}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* カテゴリ選択 */}
       <div>
-        <p className="text-xs text-slate-500 mb-1.5">カテゴリ</p>
-        <div className="grid grid-cols-3 gap-1.5">
+        <p className="text-xs text-slate-500 mb-1">
+          カテゴリ
+          {recentCategories.length > 0 && (
+            <span className="ml-2 text-slate-600">最近: </span>
+          )}
+          {recentCategories.map(c => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setCategory(c)}
+              className={`ml-1 px-1.5 py-0.5 rounded-full text-xs border transition-all ${
+                category === c ? "bg-violet-600 border-violet-500 text-white" : "border-slate-600 text-slate-500 hover:border-slate-400 hover:text-slate-300"
+              }`}
+            >
+              {c}
+            </button>
+          ))}
+        </p>
+        <div className="grid grid-cols-4 gap-1">
           {currentCategories.map(c => (
             <button
               key={c}
+              type="button"
               onClick={() => setCategory(c)}
-              className={`py-2 rounded-lg text-xs border transition-all ${
+              className={`py-1.5 rounded-lg text-xs border transition-all truncate px-1 ${
                 category === c ? "bg-violet-600 border-violet-500 text-white" : "border-slate-700 text-slate-400 hover:border-slate-500"
               }`}
             >
@@ -228,32 +230,30 @@ export default function InputForm({ onSuccess, recentTransactions }: Props) {
       </div>
 
       {/* 支払方法 */}
-      <div>
-        <p className="text-xs text-slate-500 mb-1.5">支払方法</p>
-        <div className="flex gap-1.5 flex-wrap">
-          {PAYMENT_METHODS.map(m => (
-            <button
-              key={m}
-              onClick={() => setPayment(m)}
-              className={`px-3 py-1.5 rounded-lg text-xs border transition-all ${
-                payment === m ? "bg-violet-600 border-violet-500 text-white" : "border-slate-700 text-slate-400"
-              }`}
-            >
-              {m}
-            </button>
-          ))}
-        </div>
+      <div className="flex gap-1 flex-wrap">
+        {PAYMENT_METHODS.map(m => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setPayment(m)}
+            className={`px-2 py-1 rounded-lg text-xs border transition-all ${
+              payment === m ? "bg-violet-600 border-violet-500 text-white" : "border-slate-700 text-slate-400"
+            }`}
+          >
+            {m}
+          </button>
+        ))}
       </div>
 
       {/* 日付 & 固定費フラグ */}
-      <div className="flex gap-3 items-center">
+      <div className="flex gap-2 items-center">
         <input
           type="date"
           value={date}
           onChange={e => setDate(e.target.value)}
-          className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500"
+          className="flex-1 min-w-0 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-500"
         />
-        <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-400">
+        <label className="flex items-center gap-1.5 cursor-pointer text-sm text-slate-400 shrink-0">
           <input
             type="checkbox"
             checked={isFixed}
@@ -264,14 +264,23 @@ export default function InputForm({ onSuccess, recentTransactions }: Props) {
         </label>
       </div>
 
-      {/* 送信 */}
+      {/* 保存フィードバック */}
+      {savedFlash && (
+        <div className="text-center text-xs text-emerald-400 bg-emerald-900/30 border border-emerald-700/40 rounded-xl py-2 animate-fade-in">
+          ✅ 保存しました！
+        </div>
+      )}
+
+      {/* 保存ボタン */}
       <button
+        type="button"
         onClick={handleSubmit}
         disabled={loading}
-        className="w-full py-4 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 rounded-xl font-bold text-lg transition-all"
+        className="w-full py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 rounded-xl font-bold text-sm transition-all"
       >
         {loading ? "保存中..." : "💾 保存する"}
       </button>
+
     </div>
   )
 }

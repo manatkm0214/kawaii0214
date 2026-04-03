@@ -6,14 +6,16 @@ import Image from "next/image"
 import type { User } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
 import { Transaction, Budget, Profile, NavPage, formatCurrency } from "@/lib/utils"
-import BottomNav from "@/lib/components/BottomNav"
+import MoneyAnimation from "@/lib/components/MoneyAnimation"
 import Dashboard from "@/lib/components/Dashboard"
 import InputForm from "@/lib/components/InputForm"
 import Charts from "@/lib/components/Charts"
 import AIAnalysis from "@/lib/components/AIAnalysis"
 import AnnualReport from "@/lib/components/AnnualReport"
+import Calendar from "@/lib/components/Calendar"
 import PresetSetup from "@/lib/components/PresetSetup"
 import AccountSettings from "@/lib/components/AccountSettings"
+import GoalsAndDebt from "@/lib/components/GoalsAndDebt"
 
 function isPasswordValid(pwd: string): boolean {
   return pwd.normalize("NFKC").trim().length >= 8
@@ -160,10 +162,10 @@ const EMAIL_COOLDOWN_STORAGE_KEY = "kakeibo_email_cooldown_until"
 // ─── Auth View ──────────────────────────────────────────────────────────────
 function WelcomeView({ onStartAuth }: { onStartAuth: () => void }) {
   return (
-    <div className="entry-screen min-h-screen bg-slate-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm space-y-5 animate-slide-up">
+    <div className="entry-screen w-screen h-screen min-h-0 min-w-0 max-w-none max-h-none bg-slate-950 flex items-center justify-center p-0">
+      <div className="w-full max-w-3xl space-y-10 animate-slide-up">
         <div className="text-center">
-          <div className="entry-logo-box mx-auto mb-3 w-20 h-20 rounded-2xl overflow-hidden border border-slate-700/60 bg-slate-900/70">
+          <div className="entry-logo-box mx-auto mb-6 w-40 h-40 rounded-3xl overflow-hidden border-4 border-slate-700/60 bg-slate-900/70">
             <Image
               src="/logo-kakeibo.svg"
               alt="家計簿アプリ ロゴ"
@@ -172,15 +174,15 @@ function WelcomeView({ onStartAuth }: { onStartAuth: () => void }) {
               priority
             />
           </div>
-          <h1 className="text-2xl font-bold text-white">家計簿アプリ</h1>
-          <p className="text-slate-300 text-sm mt-1">AIと一緒に賢く管理</p>
+          <h1 className="text-5xl font-extrabold text-white mb-2">家計簿アプリ</h1>
+          <p className="text-slate-300 text-2xl mt-2">AIと一緒に賢く管理</p>
         </div>
 
-        <div className="entry-panel bg-slate-800/60 border border-slate-700/50 rounded-2xl p-6 space-y-4">
-          <p className="text-sm text-slate-200 leading-relaxed">
+        <div className="entry-panel bg-slate-800/80 border-2 border-slate-700/80 rounded-3xl p-12 space-y-8 w-full max-w-2xl mx-auto">
+          <p className="text-xl text-slate-200 leading-relaxed font-semibold">
             支出の記録、予算管理、将来予測までを1つにまとめた家計管理アプリです。
           </p>
-          <ul className="text-xs text-slate-300 space-y-2 list-disc list-inside">
+          <ul className="text-lg text-slate-300 space-y-4 list-disc list-inside">
             <li>日々の収支をかんたん入力</li>
             <li>グラフとレポートで家計を見える化</li>
             <li>AI分析で改善アクションを提案</li>
@@ -188,11 +190,11 @@ function WelcomeView({ onStartAuth }: { onStartAuth: () => void }) {
           <button
             type="button"
             onClick={onStartAuth}
-            className="w-full py-3 bg-violet-600 hover:bg-violet-500 rounded-xl font-bold transition-all text-white"
+            className="w-full py-6 bg-violet-600 hover:bg-violet-500 rounded-2xl font-extrabold text-2xl transition-all text-white"
           >
             ログイン / 新規登録へ進む
           </button>
-          <div className="text-center text-xs text-slate-500">
+          <div className="text-center text-lg text-slate-400 mt-8">
             <Link href="/privacy" className="hover:text-slate-300 underline underline-offset-2">プライバシーポリシー</Link>
             {' '}
             <span>·</span>
@@ -205,12 +207,26 @@ function WelcomeView({ onStartAuth }: { onStartAuth: () => void }) {
           </div>
         </div>
       </div>
+    {/* 右下に常時キャラクター表示 */}
+    <div style={{position: "fixed", bottom: 24, right: 24, zIndex: 50, pointerEvents: "none"}}>
+      <div className="hidden md:block transition-all opacity-60 hover:opacity-100 pointer-events-auto">
+        <MoneyAnimation mascot />
+      </div>
+    </div>
     </div>
   )
 }
 
-function AuthView({ onAuth, onBack, initialMessage, initialEmail }: { onAuth: (nextUser?: User | null) => Promise<void> | void; onBack?: () => void; initialMessage?: { type: "success" | "error"; text: string } | null; initialEmail?: string }) {
+function AuthView({ onAuth, onBack, initialMessage, initialEmail, onGuestLogin }: { onAuth: (nextUser?: User | null) => Promise<void> | void; onBack?: () => void; initialMessage?: { type: "success" | "error"; text: string } | null; initialEmail?: string; onGuestLogin?: () => Promise<void> }) {
   const [isLogin, setIsLogin] = useState(true)
+  const [guestLoading, setGuestLoading] = useState(false)
+
+  async function handleGuestLogin() {
+    if (!onGuestLogin) return
+    setGuestLoading(true)
+    await onGuestLogin()
+    setGuestLoading(false)
+  }
   const [email, setEmail] = useState(initialEmail ?? "")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -816,6 +832,25 @@ function AuthView({ onAuth, onBack, initialMessage, initialEmail }: { onAuth: (n
               LINEでログイン（設定中）
             </button>
           )}
+
+          {onGuestLogin && (
+            <div className="pt-1">
+              <div className="relative flex items-center gap-2 mb-3">
+                <div className="flex-1 h-px bg-slate-700" />
+                <span className="text-[11px] text-slate-500 shrink-0">または</span>
+                <div className="flex-1 h-px bg-slate-700" />
+              </div>
+              <button
+                type="button"
+                onClick={handleGuestLogin}
+                disabled={guestLoading || loading}
+                className="w-full py-2.5 rounded-xl font-bold text-sm bg-slate-700/60 hover:bg-slate-700 border border-slate-600 hover:border-slate-500 text-slate-300 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {guestLoading ? "準備中..." : "👤 ゲストとして試す（登録不要）"}
+              </button>
+              <p className="text-[10px] text-slate-500 text-center mt-1.5">ログアウトするとデータは消えます</p>
+            </div>
+          )}
         </div>
 
         {/* フッター */}
@@ -1060,6 +1095,18 @@ export default function Home() {
     setTransactions([])
   }
 
+  async function handleGuestLogin() {
+    const supabase = createClient()
+    const { data, error } = await supabase.auth.signInAnonymously()
+    if (error || !data.user) {
+      setAuthNotice({ type: "error", text: "ゲストログインに失敗しました。しばらくしてから再試行してください。" })
+      return
+    }
+    setUser(data.user)
+    setShowAuthView(false)
+    setAuthNotice(null)
+  }
+
   async function exportCSV() {
     const header = "日付,種別,カテゴリ,金額,支払方法,メモ,固定費\n"
     const rows = transactions.map(t =>
@@ -1199,7 +1246,7 @@ export default function Home() {
         >
           {theme === "dark" ? "ライト" : "ダーク"}
         </button>
-        <AuthView onAuth={syncSessionToHome} onBack={() => setShowAuthView(false)} initialMessage={authNotice} initialEmail={authPrefillEmail} />
+        <AuthView onAuth={syncSessionToHome} onBack={() => setShowAuthView(false)} initialMessage={authNotice} initialEmail={authPrefillEmail} onGuestLogin={handleGuestLogin} />
       </>
     )
   }
@@ -1276,31 +1323,40 @@ export default function Home() {
   const now = new Date()
   const isCurrentMonth = currentMonth === `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
 
-  return (
-    <div className="min-h-screen bg-slate-950">
-      <button
-        type="button"
-        onClick={toggleTheme}
-        className="fixed top-3 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
-      >
-        {theme === "dark" ? "ライト" : "ダーク"}
-      </button>
-      {/* ヘッダー */}
-      <header className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur border-b border-slate-800 no-print">
-        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-          <div>
-            <h1 className="text-sm font-bold text-white">
-              {navPage === "dashboard" ? "📊 ダッシュボード"
-                : navPage === "input" ? "✏️ 入力"
-                : navPage === "charts" ? "📈 グラフ"
-                : navPage === "ai" ? "🤖 AI分析"
-                : "📄 レポート"}
-            </h1>
-            <p className="text-xs text-slate-400">{profile?.display_name ?? ""}</p>
-          </div>
+  const NAV_ITEMS = [
+    { page: "dashboard" as const, icon: "📊", label: "ダッシュボード" },
+    { page: "calendar" as const, icon: "📅", label: "カレンダー" },
+    { page: "charts" as const, icon: "📈", label: "グラフ" },
+    { page: "ai" as const, icon: "🤖", label: "AI分析" },
+    { page: "report" as const, icon: "📄", label: "レポート" },
+    { page: "goals" as const, icon: "🎯", label: "目標・ローン" },
+  ]
 
-          {/* 月切替（dashboardとchartsで表示） */}
-          {(navPage === "dashboard" || navPage === "charts") && (
+  return (
+    <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-slate-950">
+
+      {/* ゲストバナー */}
+      {user?.is_anonymous && (
+        <div className="shrink-0 bg-amber-950 border-b border-amber-700/60 px-4 py-1.5 flex items-center justify-between gap-3 no-print">
+          <p className="text-xs text-amber-200">👤 ゲストモード — ログアウトするとデータは消えます</p>
+          <button
+            type="button"
+            onClick={() => setShowAuthView(true)}
+            className="shrink-0 text-xs px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg transition-colors"
+          >
+            アカウント登録
+          </button>
+        </div>
+      )}
+
+      {/* トップバー */}
+      <header className="shrink-0 z-40 bg-slate-900/90 backdrop-blur border-b border-slate-800 no-print">
+        <div className="px-4 py-2.5 flex items-center justify-between gap-4">
+          {/* アプリ名 */}
+          <span className="text-base font-extrabold text-emerald-400 whitespace-nowrap shrink-0">きらきら家計簿</span>
+
+          {/* 月切替 */}
+          {(navPage === "dashboard" || navPage === "charts" || navPage === "calendar") && (
             <div className="month-switch-group flex items-center gap-1">
               <button onClick={prevMonth} className="month-switch-arrow p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">◀</button>
               <button onClick={goToday} className={`month-switch-current text-xs px-2 py-1 rounded-lg transition-all ${isCurrentMonth ? "text-white bg-violet-600/30" : "text-slate-300 hover:text-white hover:bg-slate-800"}`}>
@@ -1310,8 +1366,8 @@ export default function Home() {
             </div>
           )}
 
-          {/* メニュー */}
-          <div className="flex gap-1">
+          {/* アクション */}
+          <div className="flex items-center gap-1 ml-auto">
             {navPage === "dashboard" && (
               <>
                 <button onClick={generateFixedCosts} className="text-xs px-2 py-1.5 bg-slate-800 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition-colors" title="固定費を来月分コピー">🔁</button>
@@ -1319,110 +1375,134 @@ export default function Home() {
                 <button onClick={exportCSV} className="text-xs px-2 py-1.5 bg-slate-800 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition-colors" title="CSV出力">📥</button>
               </>
             )}
-            <button onClick={() => setShowAccountSettings(true)} className="text-xs px-2 py-1.5 bg-slate-800 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition-colors">アカウント設定</button>
-            <button onClick={() => setShowProfileSettings(true)} className="text-xs px-2 py-1.5 bg-slate-800 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition-colors">配分目標/初期設定</button>
+            <button onClick={() => window.print()} className="text-xs px-2 py-1.5 bg-slate-800 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition-colors" title="印刷">🖨️</button>
+            <button onClick={toggleTheme} className="text-xs px-2 py-1.5 bg-slate-800 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition-colors">
+              {theme === "dark" ? "☀️" : "🌙"}
+            </button>
+            <button onClick={() => setShowAccountSettings(true)} className="text-xs px-2 py-1.5 bg-slate-800 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition-colors">設定</button>
+            <button onClick={() => setShowProfileSettings(true)} className="text-xs px-2 py-1.5 bg-slate-800 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition-colors">目標</button>
             <button onClick={handleSignOut} className="text-xs px-2 py-1.5 bg-slate-800 rounded-lg text-slate-300 hover:text-white hover:bg-red-600/30 transition-colors">ログアウト</button>
           </div>
         </div>
       </header>
 
-      {/* コンテンツ */}
-      <main className="max-w-lg mx-auto px-4 pt-4 pb-24">
-        {dataLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <p className="text-slate-400 animate-pulse">データ読み込み中...</p>
+      {/* 3カラムボディ */}
+      <div className="flex-1 min-h-0 flex overflow-hidden">
+
+        {/* 左カラム (2) — サイドナビ */}
+        <aside className="flex-2 min-w-0 flex flex-col bg-slate-900 border-r border-slate-800 overflow-y-auto no-print">
+          <nav className="flex flex-col gap-1 p-3">
+            {NAV_ITEMS.map(({ page, icon, label }) => (
+              <button
+                type="button"
+                key={page}
+                onClick={() => setNavPage(page)}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left ${
+                  navPage === page
+                    ? "bg-violet-600/20 text-violet-300 border border-violet-700/40"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800"
+                }`}
+              >
+                <span className="text-lg">{icon}</span>
+                <span>{label}</span>
+              </button>
+            ))}
+          </nav>
+          <div className="mt-auto p-3 border-t border-slate-800">
+            <p className="text-xs text-slate-500 truncate">{profile?.display_name ?? ""}</p>
           </div>
-        ) : (
-          <>
-            {navPage === "dashboard" && (
-              <Dashboard
-                transactions={transactions}
-                budgets={budgets}
-                currentMonth={currentMonth}
-                profile={profile}
-                onOpenSetup={() => setShowProfileSettings(true)}
-              />
+        </aside>
+
+        {/* 中央カラム (5) — メインコンテンツ */}
+        <main className="flex-5 min-w-0 overflow-y-auto">
+          <div className="p-4 min-h-full">
+            {dataLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <p className="text-slate-400 animate-pulse">データ読み込み中...</p>
+              </div>
+            ) : (
+              <>
+                {(navPage === "dashboard" || navPage === "input") && (
+                  <Dashboard
+                    transactions={transactions}
+                    budgets={budgets}
+                    currentMonth={currentMonth}
+                    profile={profile}
+                    onOpenSetup={() => setShowProfileSettings(true)}
+                  />
+                )}
+                {navPage === "calendar" && (
+                  <Calendar transactions={transactions} currentMonth={currentMonth} />
+                )}
+                {navPage === "charts" && (
+                  <Charts transactions={transactions} currentMonth={currentMonth} />
+                )}
+                {navPage === "ai" && (
+                  <AIAnalysis
+                    transactions={transactions}
+                    currentMonth={currentMonth}
+                  />
+                )}
+                {navPage === "report" && (
+                  <AnnualReport transactions={transactions} currentMonth={currentMonth} />
+                )}
+                {navPage === "goals" && (
+                  <GoalsAndDebt transactions={transactions} currentMonth={currentMonth} />
+                )}
+              </>
             )}
-            {navPage === "input" && (
-              <div className="space-y-4">
-                <InputForm
-                  recentTransactions={transactions}
-                  onSuccess={tx => {
-                    setTransactions(prev => [tx, ...prev])
-                    setCurrentMonth(tx.date.slice(0, 7))
-                    setNavPage("dashboard")
-                  }}
-                />
-                {/* 直近取引履歴 */}
-                <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4">
-                  <h3 className="text-sm font-semibold text-white mb-3">📝 直近の取引</h3>
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {transactions.slice(0, 20).map(t => (
-                      <div key={t.id} className="flex items-center justify-between text-xs">
-                        <div>
-                          <span className="text-slate-400">{t.date.slice(5)} </span>
-                          <span className="text-white">{t.category}</span>
-                          {t.memo && <span className="text-slate-400"> · {t.memo}</span>}
-                          {t.is_fixed && <span className="ml-1 text-violet-300 font-semibold">固定</span>}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className={
-                            t.type === "income" ? "text-emerald-400 font-semibold"
-                            : t.type === "saving" ? "text-blue-400 font-semibold"
-                            : t.type === "investment" ? "text-violet-400 font-semibold"
-                            : "text-red-400 font-semibold"
-                          }>
-                            {t.type === "expense" ? "-" : "+"}{formatCurrency(t.amount)}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleShareTransaction(t)}
-                            className="px-1.5 py-1 rounded-md border border-slate-600 text-slate-300 hover:text-white hover:border-slate-400"
-                            title="この取引を共有"
-                          >
-                            共有
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteTransaction(t)}
-                            className="px-1.5 py-1 rounded-md border border-red-700/50 text-red-300 hover:text-red-200 hover:border-red-500"
-                            title="この取引を削除"
-                          >
-                            削除
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+          </div>
+        </main>
+
+        {/* 右カラム (3) — 入力フォーム＋履歴 */}
+        <aside className="flex-3 min-w-0 overflow-y-auto border-l border-slate-800 bg-slate-900/40">
+          <div className="p-3">
+            <InputForm
+              recentTransactions={transactions}
+              onSuccess={tx => {
+                setTransactions(prev => [tx, ...prev])
+                setCurrentMonth(tx.date.slice(0, 7))
+              }}
+            />
+          </div>
+          <div className="border-t border-slate-800 p-3">
+            <h3 className="text-xs font-semibold text-slate-400 mb-2">📝 直近の取引</h3>
+            <div className="space-y-1.5">
+              {transactions.slice(0, 30).map(t => (
+                <div key={t.id} className="flex items-center justify-between text-xs bg-slate-800/40 rounded-lg px-2 py-1.5">
+                  <div className="min-w-0 flex-1">
+                    <span className="text-slate-500">{t.date.slice(5)} </span>
+                    <span className="text-slate-200">{t.category}</span>
+                    {t.memo && <span className="text-slate-500"> · {t.memo}</span>}
+                    {t.is_fixed && <span className="ml-1 text-violet-300">固定</span>}
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                    <span className={
+                      t.type === "income" ? "text-emerald-400 font-semibold"
+                      : t.type === "saving" ? "text-blue-400 font-semibold"
+                      : t.type === "investment" ? "text-violet-400 font-semibold"
+                      : "text-red-400 font-semibold"
+                    }>
+                      {t.type === "expense" ? "-" : "+"}{formatCurrency(t.amount)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleShareTransaction(t)}
+                      className="px-1 py-0.5 rounded border border-slate-600 text-slate-400 hover:text-white hover:border-slate-400 text-[10px]"
+                    >共有</button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteTransaction(t)}
+                      className="px-1 py-0.5 rounded border border-red-800/50 text-red-400 hover:text-red-200 hover:border-red-500 text-[10px]"
+                    >削除</button>
                   </div>
                 </div>
-              </div>
-            )}
-            {navPage === "charts" && (
-              <Charts transactions={transactions} currentMonth={currentMonth} />
-            )}
-            {navPage === "ai" && (
-              <AIAnalysis
-                transactions={transactions}
-                budgets={budgets}
-                currentMonth={currentMonth}
-                profile={profile}
-                onProfileUpdate={(next) => {
-                  setProfile((prev) => {
-                    if (!prev) return prev
-                    return { ...prev, ...next }
-                  })
-                }}
-              />
-            )}
-            {navPage === "report" && (
-              <AnnualReport transactions={transactions} currentMonth={currentMonth} />
-            )}
-          </>
-        )}
-      </main>
+              ))}
+            </div>
+          </div>
+        </aside>
 
-      {/* ボトムナビ */}
-      <BottomNav current={navPage} onChange={setNavPage} />
+      </div>{/* /3カラム */}
     </div>
   )
 }

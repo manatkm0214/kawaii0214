@@ -3,11 +3,15 @@
 import Link from "next/link"
 import { FormEvent, useState } from "react"
 
+
+import type { AIProvider } from "../ai"
+
 type ContactForm = {
   name: string
   email: string
   subject: string
   message: string
+  provider: AIProvider
 }
 
 const initialForm: ContactForm = {
@@ -15,6 +19,7 @@ const initialForm: ContactForm = {
   email: "",
   subject: "",
   message: "",
+  provider: "claude",
 }
 
 export default function ContactPage() {
@@ -119,6 +124,20 @@ export default function ContactPage() {
               className="contact-input mt-1 w-full min-h-36 bg-slate-900 border border-slate-600 rounded-xl px-3 py-2.5"
               placeholder="お問い合わせ内容をご記入ください"
             />
+          </label>
+
+
+          <label className="block text-sm">
+            AIプロバイダー選択
+            <select
+              value={form.provider}
+              onChange={e => updateField("provider", e.target.value as AIProvider)}
+              className="contact-input mt-1 w-full bg-slate-900 border border-slate-600 rounded-xl px-3 py-2.5"
+            >
+              <option value="claude">Claude（Anthropic）</option>
+              <option value="openai">OpenAI（ChatGPT）</option>
+              <option value="gemini">Gemini（Google）</option>
+            </select>
           </label>
 
           <button

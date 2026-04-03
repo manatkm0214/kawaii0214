@@ -2,7 +2,7 @@ export type TransactionType = "income" | "expense" | "saving" | "investment"
 
 export type TabType = TransactionType | "fixed"
 
-export type NavPage = "dashboard" | "input" | "charts" | "ai" | "report"
+export type NavPage = "dashboard" | "input" | "charts" | "ai" | "report" | "calendar" | "goals"
 
 export interface Transaction {
   id: string

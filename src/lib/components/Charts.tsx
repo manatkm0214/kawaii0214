@@ -6,6 +6,7 @@ import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   RadarChart, Radar, PolarGrid, PolarAngleAxis,
+  BarChart, Bar, Legend,
 } from "recharts"
 
 interface Props {
@@ -24,7 +25,7 @@ export default function Charts({ transactions, currentMonth }: Props) {
     return formatCurrency(Number.isFinite(num) ? num : 0)
   }
 
-  const { pieData, lineData, radarData } = useMemo(() => {
+  const { pieData, lineData, radarData, yearData } = useMemo(() => {
     // 円グラフ：支出カテゴリ
     const monthly = transactions.filter(t => t.date.startsWith(currentMonth))
     const catMap: Record<string, number> = {}
@@ -61,14 +62,29 @@ export default function Charts({ transactions, currentMonth }: Props) {
       { subject: "固定費管理", value: expense > 0 ? Math.max(0, 100 - (fixed / expense) * 100) : 50 },
     ]
 
-    return { pieData, lineData, radarData }
+    // 年間棒グラフ：12ヶ月
+    const now2 = new Date(currentMonth + "-01")
+    const yearData = Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(now2.getFullYear(), now2.getMonth() - 11 + i, 1)
+      const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+      const txs = transactions.filter(t => t.date.startsWith(m))
+      return {
+        month: `${d.getMonth() + 1}月`,
+        収入: txs.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0),
+        支出: txs.filter(t => t.type === "expense").reduce((s, t) => s + t.amount, 0),
+        貯金: txs.filter(t => t.type === "saving").reduce((s, t) => s + t.amount, 0),
+        投資: txs.filter(t => t.type === "investment").reduce((s, t) => s + t.amount, 0),
+      }
+    })
+
+    return { pieData, lineData, radarData, yearData }
   }, [transactions, currentMonth])
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="animate-fade-in flex flex-col gap-2">
       {/* 支出カテゴリ円グラフ */}
       <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4">
-        <h3 className="text-sm font-semibold text-slate-300 mb-4">支出カテゴリ</h3>
+        <h3 className="text-sm font-semibold text-slate-300 mb-3">支出カテゴリ</h3>
         {pieData.length === 0 ? (
           <p className="text-slate-500 text-sm text-center py-8">データがありません</p>
         ) : (
@@ -97,7 +113,7 @@ export default function Charts({ transactions, currentMonth }: Props) {
 
       {/* 月別収支折れ線 */}
       <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4">
-        <h3 className="text-sm font-semibold text-slate-300 mb-4">月別収支（過去6ヶ月）</h3>
+        <h3 className="text-sm font-semibold text-slate-300 mb-3">月別収支（過去6ヶ月）</h3>
         <ResponsiveContainer width="100%" height={180}>
           <LineChart data={lineData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
@@ -120,7 +136,7 @@ export default function Charts({ transactions, currentMonth }: Props) {
 
       {/* レーダーチャート */}
       <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4">
-        <h3 className="text-sm font-semibold text-slate-300 mb-4">財務バランス</h3>
+        <h3 className="text-sm font-semibold text-slate-300 mb-3">財務バランス</h3>
         <ResponsiveContainer width="100%" height={200}>
           <RadarChart data={radarData}>
             <PolarGrid stroke="#334155" />
@@ -129,6 +145,23 @@ export default function Charts({ transactions, currentMonth }: Props) {
           </RadarChart>
         </ResponsiveContainer>
       </div>
+    {/* 年間収支棒グラフ（全幅） */}
+    <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4">
+      <h3 className="text-sm font-semibold text-slate-300 mb-3">年間収支（過去12ヶ月）</h3>
+      <ResponsiveContainer width="100%" height={220}>
+        <BarChart data={yearData} barCategoryGap="20%">
+          <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+          <XAxis dataKey="month" tick={{ fill: "#94a3b8", fontSize: 11 }} />
+          <YAxis tick={{ fill: "#94a3b8", fontSize: 10 }} tickFormatter={v => v >= 10000 ? `${v / 10000}万` : String(v)} />
+          <Tooltip formatter={formatTooltipValue} contentStyle={{ background: "#1e293b", border: "1px solid #334155" }} />
+          <Legend wrapperStyle={{ fontSize: 11, color: "#94a3b8" }} />
+          <Bar dataKey="収入" fill="#10b981" radius={[2, 2, 0, 0]} />
+          <Bar dataKey="支出" fill="#f43f5e" radius={[2, 2, 0, 0]} />
+          <Bar dataKey="貯金" fill="#3b82f6" radius={[2, 2, 0, 0]} />
+          <Bar dataKey="投資" fill="#8b5cf6" radius={[2, 2, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
     </div>
+  </div>
   )
 }
