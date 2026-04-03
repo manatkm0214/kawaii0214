@@ -336,6 +336,13 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
     return Math.ceil(defenseShortfall / monthlyBufferIncrease)
   }, [defenseShortfall, forecastSavings.projectedMonthlySavings])
 
+  const defenseEtaDateLabel = useMemo(() => {
+    if (defenseEtaMonths == null || defenseEtaMonths <= 0) return null
+    const base = new Date()
+    const eta = new Date(base.getFullYear(), base.getMonth() + defenseEtaMonths, 1)
+    return `${eta.getFullYear()}年${eta.getMonth() + 1}月`
+  }, [defenseEtaMonths])
+
   const cards = [
     { label: "収入", value: stats.income, color: "from-emerald-500/20 to-emerald-600/5", text: "text-emerald-400" },
     { label: "支出", value: stats.expense, color: "from-red-500/20 to-red-600/5", text: "text-red-400" },
@@ -683,7 +690,7 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
           現在 {formatCurrency(stats.defenseFund)} / 不足 {formatCurrency(defenseShortfall)}
         </p>
         <p className="text-xs text-slate-400">
-          到達見込み: {defenseEtaMonths === 0 ? "達成済み" : defenseEtaMonths == null ? "算出不可（貯金ペース0以下）" : `約${defenseEtaMonths}か月`}
+          到達見込み: {defenseEtaMonths === 0 ? "達成済み" : defenseEtaMonths == null ? "算出不可（貯金ペース0以下）" : `約${defenseEtaMonths}か月（${defenseEtaDateLabel}）`}
         </p>
         <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
           <div className={`h-2 ${defenseProgress >= 100 ? "bg-emerald-500" : "bg-amber-500"}`} style={{ width: `${defenseProgress}%` }} />
