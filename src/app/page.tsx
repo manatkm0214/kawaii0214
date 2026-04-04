@@ -35,6 +35,8 @@ import PresetSetup from "../lib/components/PresetSetup";
 import AccountSettings from "../lib/components/AccountSettings";
 import WelcomeView from "../lib/components/WelcomeView";
 import AuthView from "../lib/components/AuthView";
+import KidsDashboard from "../lib/components/KidsDashboard";
+import SeniorDashboard from "../lib/components/SeniorDashboard";
 import { useCharacterImage } from "../lib/hooks/useCharacterImage";
 
 // ─── Main App ───────────────────────────────────────────────────────────────
@@ -51,6 +53,7 @@ export default function Home() {
   const [showAuthView, setShowAuthView] = useState(false)
   const [showProfileSettings, setShowProfileSettings] = useState(false)
   const [showAccountSettings, setShowAccountSettings] = useState(false)
+  const [dashboardMode, setDashboardMode] = useState<'normal' | 'kids' | 'senior'>('normal')
   const [authNotice, setAuthNotice] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const [authPrefillEmail, setAuthPrefillEmail] = useState("")
   const theme = useSyncExternalStore(subscribeThemeChange, readStoredTheme, () => "dark")
@@ -552,6 +555,15 @@ export default function Home() {
             </div>
           )}
 
+          {/* ダッシュボードモード切替 */}
+          {navPage === "dashboard" && (
+            <div className="flex items-center gap-0.5 bg-slate-800 rounded-xl p-0.5">
+              <button onClick={() => setDashboardMode('normal')} className={`text-xs px-2 py-1 rounded-lg font-bold transition-all ${dashboardMode === 'normal' ? 'bg-violet-600 text-white' : 'text-slate-400 hover:text-white'}`}>通常</button>
+              <button onClick={() => setDashboardMode('kids')} className={`text-xs px-2 py-1 rounded-lg font-bold transition-all ${dashboardMode === 'kids' ? 'bg-pink-500 text-white' : 'text-slate-400 hover:text-white'}`}>こども</button>
+              <button onClick={() => setDashboardMode('senior')} className={`text-xs px-2 py-1 rounded-lg font-bold transition-all ${dashboardMode === 'senior' ? 'bg-teal-600 text-white' : 'text-slate-400 hover:text-white'}`}>シニア</button>
+            </div>
+          )}
+
           {/* アクション */}
           <div className="flex items-center gap-1 ml-auto">
             {navPage === "dashboard" && (
@@ -610,7 +622,7 @@ export default function Home() {
               </div>
             ) : (
               <>
-                {navPage === "dashboard" && (
+                {navPage === "dashboard" && dashboardMode === 'normal' && (
                   <Dashboard
                     transactions={transactions}
                     budgets={budgets}
@@ -618,6 +630,12 @@ export default function Home() {
                     profile={profile}
                     onOpenSetup={() => setShowProfileSettings(true)}
                   />
+                )}
+                {navPage === "dashboard" && dashboardMode === 'kids' && (
+                  <KidsDashboard transactions={transactions} currentMonth={currentMonth} />
+                )}
+                {navPage === "dashboard" && dashboardMode === 'senior' && (
+                  <SeniorDashboard transactions={transactions} currentMonth={currentMonth} />
                 )}
                 {/* モバイル入力ページ（lgでは右カラムに表示） */}
                 {navPage === "input" && (
@@ -664,13 +682,19 @@ export default function Home() {
                 {/* lgでは input は dashboard と同じ扱い */}
                 {navPage === "input" && (
                   <div className="hidden lg:block">
-                    <Dashboard
-                      transactions={transactions}
-                      budgets={budgets}
-                      currentMonth={currentMonth}
-                      profile={profile}
-                      onOpenSetup={() => setShowProfileSettings(true)}
-                    />
+                    {dashboardMode === 'kids' ? (
+                      <KidsDashboard transactions={transactions} currentMonth={currentMonth} />
+                    ) : dashboardMode === 'senior' ? (
+                      <SeniorDashboard transactions={transactions} currentMonth={currentMonth} />
+                    ) : (
+                      <Dashboard
+                        transactions={transactions}
+                        budgets={budgets}
+                        currentMonth={currentMonth}
+                        profile={profile}
+                        onOpenSetup={() => setShowProfileSettings(true)}
+                      />
+                    )}
                   </div>
                 )}
                 {navPage === "calendar" && (
