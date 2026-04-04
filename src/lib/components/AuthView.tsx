@@ -16,11 +16,37 @@ const AuthView: React.FC<AuthViewProps> = ({ onAuth, onBack, initialMessage, ini
   const [email, setEmail] = useState(initialEmail || "");
   const [password, setPassword] = useState("");
   const [showLineQR, setShowLineQR] = useState(false);
+  const [qrUrl, setQrUrl] = useState<string>("");
+  const [lineLoading, setLineLoading] = useState(false);
   const [mode, setMode] = useState<'login' | 'register'>("login");
   const { characterUrl, characterName } = useCharacterImage();
-  useBgTheme(); // 背景変更をリッスンしてCSS変数に即時反映
+  useBgTheme();
 
   const displayUrl = idolImageUrl || characterUrl;
+
+  async function handleLineLogin() {
+    setLineLoading(true);
+    try {
+      const res = await fetch("/api/auth/line/start");
+      const data = await res.json();
+      if (data.authUrl) window.location.href = data.authUrl;
+    } catch {
+      setLineLoading(false);
+    }
+  }
+
+  async function handleShowQR() {
+    if (showLineQR) { setShowLineQR(false); return; }
+    try {
+      const res = await fetch("/api/auth/line/start");
+      const data = await res.json();
+      if (data.qrUrl) setQrUrl(data.qrUrl);
+      if (data.authUrl) {
+        // QRタップ用にauthUrlも保存
+        setShowLineQR(true);
+      }
+    } catch { setShowLineQR(true); }
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4 relative overflow-hidden" style={{ background: "var(--background)" }}>
@@ -98,14 +124,15 @@ const AuthView: React.FC<AuthViewProps> = ({ onAuth, onBack, initialMessage, ini
           </button>
           <button
             type="button"
-            onClick={() => window.location.href = "/api/auth/line/start"}
-            className="w-full px-4 py-2 bg-green-400 text-white font-bold rounded-xl shadow flex items-center justify-center gap-2 hover:bg-green-500 transition"
+            onClick={handleLineLogin}
+            disabled={lineLoading}
+            className="w-full px-4 py-2 bg-green-400 text-white font-bold rounded-xl shadow flex items-center justify-center gap-2 hover:bg-green-500 transition disabled:opacity-60"
           >
-            <FaLine className="text-2xl" /> LINEでログイン
+            <FaLine className="text-2xl" /> {lineLoading ? "移動中..." : "LINEでログイン"}
           </button>
           <button
             type="button"
-            onClick={() => setShowLineQR(v => !v)}
+            onClick={handleShowQR}
             className="w-full px-4 py-2 bg-green-50 text-green-700 font-bold rounded-xl shadow flex items-center justify-center gap-2 hover:bg-green-100 border border-green-200 transition text-xs"
           >
             QRでLINEログイン
@@ -113,8 +140,7 @@ const AuthView: React.FC<AuthViewProps> = ({ onAuth, onBack, initialMessage, ini
           {showLineQR && (
             <div className="flex flex-col items-center mt-2 mb-2 p-2 bg-green-50 rounded-xl border border-green-200 shadow-inner">
               <span className="text-xs text-green-700 mb-1">LINEアプリでQRをスキャン</span>
-              <img src="/api/auth/line/start" alt="LINE QR" className="w-36 h-36 rounded-lg border-2 border-green-300" />
-              <a href="/api/auth/line/start" target="_blank" rel="noopener noreferrer" className="mt-2 text-green-600 underline text-xs">LINE認証ページを開く</a>
+              {qrUrl && <img src={qrUrl} alt="LINE QR" className="w-36 h-36 rounded-lg border-2 border-green-300" />}
             </div>
           )}
           {onGuestLogin && (
