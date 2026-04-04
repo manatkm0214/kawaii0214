@@ -156,10 +156,10 @@ function buildMagicLinkEmail(link: string): { subject: string; html: string } {
   return { subject, html }
 }
 
-function getAppOrigin(siteUrl: string): string {
+function getAppOrigin(siteUrl?: string): string {
   const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim()
   if (configured) return configured.replace(/\/$/, "")
-  return siteUrl.replace(/\/$/, "")
+  return (siteUrl ?? "").replace(/\/$/, "")
 }
 
 function buildPasswordResetEmail(link: string): { subject: string; html: string } {

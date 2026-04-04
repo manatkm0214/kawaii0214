@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation"
 import type { EmailOtpType } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
 
+import dynamic from "next/dynamic";
+// LogoImageは存在しないため削除
+
 function validatePassword(password: string): { ok: boolean; reason: string } {
   const normalized = password.normalize("NFKC").trim()
   if (normalized.length < 8) return { ok: false, reason: "8文字以上で入力してください" }
@@ -146,9 +149,12 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
+    <main className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-4">
+      <div className="flex flex-col items-center mb-6 justify-center">
+        {/* <LogoImage /> 削除 */}
+      </div>
       <form onSubmit={handleSubmit} className="w-full max-w-sm bg-slate-800/70 border border-slate-700 rounded-2xl p-6 space-y-4">
-        <h1 className="text-lg font-bold">パスワード再設定</h1>
+        <h1 className="text-lg font-bold idol-title">パスワード再設定</h1>
 
         {!ready && (
           <p className="text-xs text-amber-300 bg-amber-900/20 border border-amber-700/30 rounded-lg p-3">
@@ -169,8 +175,12 @@ export default function ResetPasswordPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="mt-1 w-full bg-slate-900 border border-slate-600 rounded-xl px-3 py-2.5"
-            placeholder="8文字以上（何でもOK）"
+            placeholder="8文字以上・小文字・大文字・数字・記号を含む"
           />
+          <p className="text-xs mt-1 text-slate-400">8文字以上・小文字・大文字・数字・記号をすべて含む必要があります（例: Abc12345!）</p>
+          {password && !validatePassword(password).ok && (
+            <p className="text-xs text-red-400 mt-1">✕ {validatePassword(password).reason}</p>
+          )}
         </label>
 
         <label className="block text-xs text-slate-300">
@@ -181,6 +191,9 @@ export default function ResetPasswordPage() {
             onChange={(e) => setConfirm(e.target.value)}
             className="mt-1 w-full bg-slate-900 border border-slate-600 rounded-xl px-3 py-2.5"
           />
+          {confirm && password !== confirm && (
+            <p className="text-xs text-red-400 mt-1">✕ パスワードが一致しません</p>
+          )}
         </label>
 
         <button
@@ -192,5 +205,5 @@ export default function ResetPasswordPage() {
         </button>
       </form>
     </main>
-  )
+  );
 }

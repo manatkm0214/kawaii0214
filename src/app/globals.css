@@ -1,16 +1,136 @@
+/* キャラクター画像用アニメーション */
+.animate-bounce-slow {
+  animation: idol-bounce 2.8s infinite cubic-bezier(.68,-0.55,.27,1.55);
+}
+@keyframes idol-bounce {
+  0%, 100% { transform: translateY(0); }
+  20% { transform: translateY(-18px) scale(1.08); }
+  40% { transform: translateY(0); }
+  60% { transform: translateY(-10px) scale(1.04); }
+  80% { transform: translateY(0); }
+}
+
+.animate-float {
+  animation: character-float 3.5s ease-in-out infinite;
+}
+@keyframes character-float {
+  0%, 100% { transform: translateY(0px) rotate(-1.5deg) scale(1); }
+  30% { transform: translateY(-22px) rotate(1.5deg) scale(1.04); }
+  60% { transform: translateY(-10px) rotate(-0.5deg) scale(1.02); }
+}
+
+.animate-float-slow {
+  animation: character-float-slow 5s ease-in-out infinite;
+}
+@keyframes character-float-slow {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-16px) scale(1.03); }
+}
+
+.shadow-idol {
+  box-shadow: 0 4px 24px #ffb6e6a0, 0 1px 0 #fff, 0 0 0 6px #fff0fb;
+}
+
 @import "tailwindcss";
 
 :root {
-  --background: #020617;
-  --foreground: #e2e8f0;
+  --background: linear-gradient(135deg, #ffe6fa 0%, #e0c3fc 100%);
+  --foreground: #a21caf;
+  --idol-pink: #ff8ecf;
+  --idol-purple: #b983ff;
+  --idol-yellow: #fff6a9;
+  --idol-blue: #aee9ff;
+  --idol-heart: #ffb6e6;
+  --idol-star: #ffe066;
+  --idol-glitter: #fff0fb;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Kiwi Maru', 'M PLUS Rounded 1c', 'Arial Rounded MT Bold', Arial, Helvetica, sans-serif;
+  min-height: 100vh;
   transition: background-color 220ms ease, color 220ms ease;
+  position: relative;
+  overflow-x: hidden;
 }
+
+/* きらきら背景エフェクト */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    repeating-radial-gradient(circle at 20% 30%, var(--idol-heart) 0 2px, transparent 2px 100px),
+    repeating-radial-gradient(circle at 80% 70%, var(--idol-star) 0 2px, transparent 2px 120px),
+    repeating-radial-gradient(circle at 60% 10%, var(--idol-glitter) 0 1.5px, transparent 1.5px 80px);
+  opacity: 0.18;
+}
+
+h1, h2, h3, .idol-title {
+  font-family: 'Kiwi Maru', 'M PLUS Rounded 1c', 'Arial Rounded MT Bold', Arial, Helvetica, sans-serif;
+  color: var(--idol-pink);
+  text-shadow: 0 2px 8px #fff6fa, 0 1px 0 #fff, 0 0 8px #ffb6e6;
+}
+
+.idol-btn, .btn-idol {
+  background: linear-gradient(90deg, var(--idol-pink), var(--idol-purple));
+  color: #fff;
+  border-radius: 9999px;
+  border: none;
+  font-weight: bold;
+  padding: 0.6em 1.6em;
+  font-size: 1.1em;
+  box-shadow: 0 2px 12px #ffb6e6a0, 0 1px 0 #fff;
+  transition: transform 0.12s, box-shadow 0.18s;
+}
+.idol-btn:hover, .btn-idol:hover {
+  transform: scale(1.07) rotate(-2deg);
+  box-shadow: 0 4px 24px #b983ff80, 0 1px 0 #fff;
+}
+
+.idol-card {
+  background: linear-gradient(120deg, #fff0fb 60%, #ffe6fa 100%);
+  border-radius: 1.5em;
+  box-shadow: 0 2px 16px #ffb6e640, 0 1px 0 #fff;
+  border: 2px solid var(--idol-pink);
+  padding: 2em 1.5em;
+  margin: 1.5em 0;
+  position: relative;
+}
+.idol-card::after {
+  content: "\2726";
+  position: absolute;
+  top: 1em;
+  right: 1.5em;
+  font-size: 2em;
+  color: var(--idol-star);
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.idol-heart {
+  color: var(--idol-heart);
+  font-size: 1.5em;
+  margin: 0 0.2em;
+  filter: drop-shadow(0 0 6px #fff6fa);
+}
+.idol-star {
+  color: var(--idol-star);
+  font-size: 1.3em;
+  margin: 0 0.1em;
+  filter: drop-shadow(0 0 6px #fff6fa);
+}
+
+.idol-glitter {
+  color: var(--idol-glitter);
+  font-size: 1.1em;
+  margin: 0 0.1em;
+}
+
+/* 既存アニメーションはそのまま */
 
 @keyframes kakeibo-fade-in {
   from {

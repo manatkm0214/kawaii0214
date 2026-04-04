@@ -1,6 +1,5 @@
 
 "use client"
-import MoneyAnimation from "./MoneyAnimation"
 
 import { Transaction, Budget, Profile, formatCurrency } from "@/lib/utils"
 import { useEffect, useMemo, useState } from "react"
@@ -428,60 +427,41 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
 
 
   return (
-    <div className="w-full h-screen bg-slate-950 flex flex-col overflow-hidden">
+    <div className="w-full">
 
-      {/* ─── ヘッダー（固定高さ） ─── */}
-      <header className="shrink-0 flex items-center justify-between gap-2 px-3 py-1.5 border-b border-slate-800">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 shrink-0">
-            <MoneyAnimation mascot />
+      {/* 初期設定未完了バナー */}
+        {/* 初期設定未完了バナー（ゲストログインは非表示に変更） */}
+        {/* ゲストログインバナーは非表示にしました */}
+        {(stats.budgetProgress.length === 0 || !profile?.allocation_take_home) && (
+          <div className="mb-2 bg-amber-950 border border-amber-500/70 rounded-xl px-3 py-2 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-semibold text-amber-100 border border-amber-400/30 shrink-0">要設定</span>
+              <p className="text-xs text-amber-100 truncate">手取り・配分目標・カテゴリ配分が未設定です。設定を保存するとすぐ反映されます。</p>
+            </div>
+            {onOpenSetup && (
+              <button
+                type="button"
+                onClick={onOpenSetup}
+                className="px-3 py-1.5 rounded-lg text-xs bg-amber-400 hover:bg-amber-300 text-slate-950 font-semibold shrink-0"
+              >
+                初期設定
+              </button>
+            )}
           </div>
-          <h1 className="text-base font-extrabold text-emerald-400 tracking-tight leading-none">
-            きらきら家計簿
-          </h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400 hidden sm:inline">
-            目標配分: 固定費 {allocation.fixed.target}% / 変動費 {allocation.variable.target}% / 貯蓄+投資 {allocation.savings.target}%
-          </span>
-          {onOpenSetup && (
-            <button
-              type="button"
-              onClick={onOpenSetup}
-              className="px-3 py-1.5 rounded-lg text-xs bg-violet-600 hover:bg-violet-500 text-white shrink-0"
-            >
-              設定
-            </button>
-          )}
-        </div>
-      </header>
+        )}
 
-      {/* 初期設定未完了バナー（全幅・固定高さ・条件付き） */}
-      {(stats.budgetProgress.length === 0 || !profile?.allocation_take_home) && (
-        <div className="shrink-0 mx-2 mb-0 bg-amber-950 border border-amber-500/70 rounded-xl px-3 py-2 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-semibold text-amber-100 border border-amber-400/30 shrink-0">要設定</span>
-            <p className="text-xs text-amber-100 truncate">手取り・配分目標・カテゴリ配分が未設定です。設定を保存するとすぐ反映されます。</p>
-          </div>
-          {onOpenSetup && (
-            <button
-              type="button"
-              onClick={onOpenSetup}
-              className="px-3 py-1.5 rounded-lg text-xs bg-amber-400 hover:bg-amber-300 text-slate-950 font-semibold shrink-0"
-            >
-              初期設定
-            </button>
-          )}
-        </div>
-      )}
+      {/* 目標配分サマリ（スマホでも表示） */}
+      <div className="mb-2 px-1 text-xs text-slate-400">
+        目標配分: 固定費 {allocation.fixed.target}% / 変動費 {allocation.variable.target}% / 貯蓄+投資 {allocation.savings.target}%
+      </div>
 
-      {/* ─── 3カラムメイン（残り高さをすべて使い、各カラム独立スクロール） ─── */}
-      <div className="flex-1 min-h-0 grid grid-cols-3 gap-1 p-1 pt-1">
+      {/* ─── レスポンシブ3カラムグリッド ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
 
         {/* ══════════════════════════════
             左カラム：サマリー
         ══════════════════════════════ */}
-        <div className="h-full overflow-y-auto flex flex-col gap-1 pr-1 scrollbar-thin scrollbar-thumb-slate-700">
+        <div className="flex flex-col gap-2">
 
           {/* 手取り・貯金目標 */}
           <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-2">
@@ -511,6 +491,24 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
               </div>
             </div>
           </div>
+
+          {/* 今月の予算進捗サマリー（常時表示） */}
+          {stats.budgetProgress.length > 0 && (
+            <div className="bg-violet-900/40 border border-violet-500/40 rounded-xl p-2 mb-2">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-violet-300 font-bold">今月の予算進捗</span>
+                <span className="text-violet-100 font-bold text-lg">
+                  {Math.round(stats.budgetProgress.reduce((a,b)=>a+b.pct,0)/stats.budgetProgress.length)}%
+                </span>
+              </div>
+              <div className="h-3 bg-violet-700 rounded-full overflow-hidden">
+                <div
+                  className="h-3 bg-violet-400 rounded-full transition-all"
+                  style={{ width: `${Math.min(100, Math.round(stats.budgetProgress.reduce((a,b)=>a+b.pct,0)/stats.budgetProgress.length))}%` }}
+                />
+              </div>
+            </div>
+          )}
 
           {/* 基本4指標 */}
           <div className="grid grid-cols-2 gap-2">
@@ -615,7 +613,7 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
         {/* ══════════════════════════════
             中カラム：予算・配分
         ══════════════════════════════ */}
-        <div className="h-full overflow-y-auto flex flex-col gap-1 px-0.5 scrollbar-thin scrollbar-thumb-slate-700">
+        <div className="flex flex-col gap-2">
 
           {/* カテゴリ配分 */}
           <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-2">
@@ -679,28 +677,60 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
             )}
           </div>
 
-          {/* 詳細指標 */}
+          {/* 詳細指標（カスタム） */}
           <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-2">
             <h3 className="text-xs font-semibold text-slate-300 mb-1">詳細指標</h3>
             <div className="space-y-1">
-              {[
-                { label: "貯蓄率", value: `${stats.savingRate}%`, good: stats.savingRate >= 20, benchmark: "目安 20%以上" },
-                { label: "固定費率", value: `${stats.fixedRate}%`, good: stats.fixedRate <= 50, benchmark: "目安 50%以下" },
-                { label: "浪費率", value: `${stats.wasteRate}%`, good: stats.wasteRate <= 30, benchmark: "目安 30%以下" },
-                { label: "防衛資金", value: formatCurrency(defenseFund), good: defenseFund >= defenseMinimum, benchmark: `目安 ${formatCurrency(defenseMinimum)}〜` },
-                { label: "固定費合計", value: formatCurrency(stats.fixed), good: true, benchmark: "前月比 維持・微減" },
-                { label: "投資額", value: formatCurrency(stats.investment), good: true, benchmark: "収入の10〜20%" },
-              ].map(item => (
-                <div key={item.label} className="flex items-center justify-between gap-2 text-xs">
-                  <div className="min-w-0">
-                    <span className="text-slate-300">{item.label}</span>
-                    <span className="text-slate-600 ml-1.5">{item.benchmark}</span>
-                  </div>
-                  <span className={`font-semibold shrink-0 ${item.good ? "text-slate-200" : "text-orange-400"}`}>
-                    {item.value}
-                  </span>
+              {/* 予算進捗 */}
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="min-w-0">
+                  <span className="text-slate-300">予算進捗</span>
+                  <span className="text-slate-600 ml-1.5">{stats.budgetProgress && stats.budgetProgress.length > 0 ? `平均${Math.round(stats.budgetProgress.reduce((a,b)=>a+b.pct,0)/stats.budgetProgress.length)}%` : "-"}</span>
                 </div>
-              ))}
+                <span className="font-semibold shrink-0 text-slate-200">
+                  {stats.budgetProgress && stats.budgetProgress.length > 0 ? `${Math.round(stats.budgetProgress.reduce((a,b)=>a+b.pct,0)/stats.budgetProgress.length)}%` : "-"}
+                </span>
+              </div>
+              {/* 生活防衛資金（月数） */}
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="min-w-0">
+                  <span className="text-slate-300">生活防衛（月数）</span>
+                  <span className="text-slate-600 ml-1.5">目安 3〜6ヶ月</span>
+                </div>
+                <span className={`font-semibold shrink-0 ${defenseFund / (stats.expense / 12) >= 3 ? "text-slate-200" : "text-orange-400"}`}>
+                  {stats.expense > 0 ? (defenseFund / (stats.expense / 12)).toFixed(1) : "-"}
+                </span>
+              </div>
+              {/* 時給換算 */}
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="min-w-0">
+                  <span className="text-slate-300">時給換算</span>
+                  <span className="text-slate-600 ml-1.5">収入÷労働時間</span>
+                </div>
+                <span className="font-semibold shrink-0 text-slate-200">
+                  {profile?.work_hours_month ? `¥${Math.round(stats.income / profile.work_hours_month)}` : "-"}
+                </span>
+              </div>
+              {/* 赤字危険度 */}
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="min-w-0">
+                  <span className="text-slate-300">赤字危険度</span>
+                  <span className="text-slate-600 ml-1.5">{stats.balance < 0 ? "危険" : "安全"}</span>
+                </div>
+                <span className={`font-semibold shrink-0 ${stats.balance < 0 ? "text-red-400" : "text-slate-200"}`}>
+                  {stats.balance < 0 ? "高" : "低"}
+                </span>
+              </div>
+              {/* 節約達成度合い */}
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="min-w-0">
+                  <span className="text-slate-300">節約達成度合い</span>
+                  <span className="text-slate-600 ml-1.5">貯蓄率20%以上で合格</span>
+                </div>
+                <span className={`font-semibold shrink-0 ${stats.savingRate >= 20 ? "text-emerald-400" : "text-orange-400"}`}>
+                  {stats.savingRate}%
+                </span>
+              </div>
             </div>
           </div>
 
@@ -730,10 +760,21 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
           )}
         </div>
 
+        {/* 目標ローンの下にアイドル画像を挿入 */}
+        <div className="flex flex-col items-center my-4">
+          <img
+            src="/idol/idol-girl.jpg"
+            alt="画像"
+            className="w-40 h-40 object-cover rounded-full shadow-lg border-4 border-pink-300 bg-pink-100 animate-bounce-slow"
+            style={{ boxShadow: '0 4px 24px 0 rgba(255,192,203,0.25)' }}
+          />
+          <div className="mt-2 text-pink-400 font-bold text-lg drop-shadow">がんばろうね！</div>
+        </div>
+
         {/* ══════════════════════════════
             右カラム：予測・ナビ
         ══════════════════════════════ */}
-        <div className="h-full overflow-y-auto flex flex-col gap-1 pl-1 scrollbar-thin scrollbar-thumb-slate-700">
+        <div className="flex flex-col gap-2">
 
           {/* 赤字・将来予測 */}
           <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-2 space-y-1">

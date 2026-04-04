@@ -2,12 +2,31 @@
 
 import React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function PrivacyPolicy() {
   return (
     <div className="min-h-screen bg-slate-950 py-12 px-4">
       <div className="max-w-4xl mx-auto bg-slate-900/60 border border-slate-700/50 rounded-2xl p-8">
-        <h1 className="text-4xl font-bold text-white mb-2">プライバシーポリシー</h1>
+        <h1 className="text-4xl font-bold mb-2">
+          プライバシーポリシー
+        </h1>
+      <div className="flex items-center gap-6 mb-6">
+        <Image
+          src="/default-image.png"
+          alt="画像"
+          width={80}
+          height={80}
+          className="w-20 h-20 rounded-full border-4 border-pink-300 bg-white object-cover"
+        />
+        <Image
+          src="/default-image.png"
+          alt="画像"
+          width={80}
+          height={80}
+          className="w-20 h-20 rounded-full border-4 border-blue-300 bg-white object-cover"
+        />
+      </div>
         <p className="text-slate-400 mb-8">最終更新: 2026年4月2日</p>
 
         <div className="space-y-6 text-slate-300">
@@ -140,3 +159,5 @@ export default function PrivacyPolicy() {
     </div>
   )
 }
+
+

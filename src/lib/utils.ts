@@ -34,6 +34,7 @@ export interface Profile {
   allocation_target_fixed_rate?: number | null
   allocation_target_variable_rate?: number | null
   allocation_target_savings_rate?: number | null
+  work_hours_month?: number | null // 月間労働時間
   created_at: string
 }
 

@@ -1,19 +1,180 @@
-"use client"
 
-import { Transaction, formatCurrency } from "@/lib/utils"
-import { useMemo, useState } from "react"
-
+"use client";
+// Props型を先頭で定義
 interface Props {
   transactions: Transaction[]
   currentMonth: string
 }
 
-export default function AnnualReport({ transactions, currentMonth }: Props) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [aiReport, setAiReport] = useState<any>(null)
-  const [loading, setLoading] = useState(false)
-  const [pdfLoading, setPdfLoading] = useState(false)
+import { Transaction, formatCurrency } from "@/lib/utils"
+import { useMemo, useState } from "react"
 
+
+
+const mascotsByMode = {
+  normal: [
+    {
+      key: "girl",
+      name: "さくら",
+      img: "/girl-mascot.png",
+      lines: [
+        "1年おつかれさまっ！",
+        "すごい、たくさん頑張ったね！",
+        "来年も一緒にがんばろう♡",
+        "私がずっと応援してるよ！",
+        "きゅん…！来年も楽しみだね！",
+        "着実に夢に近づいてるよ！",
+        "また一歩前進だね！",
+        "私も見守ってるよ！",
+      ],
+    },
+    {
+      key: "boy",
+      name: "カケル",
+      img: "/boy-mascot.png",
+      lines: [
+        "1年よく頑張ったな、偉いぞ。",
+        "来年も一緒に進もうぜ。",
+        "俺も応援してるからな。",
+        "着実に前進してるな。",
+        "困ったらいつでも頼ってくれ。",
+        "今年もお疲れさま。",
+        "来年も一緒に頑張ろう。",
+        "その調子、かっこいいぞ！",
+      ],
+    },
+    {
+      key: "idol",
+      name: "アイドル ルナ",
+      img: "/idol-mascot.png",
+      lines: [
+        "みんなの夢、叶えてみせるよ！",
+        "一緒にキラキラな1年にしよう☆",
+        "がんばるあなたに、エールを送るね！",
+        "ファンの応援が私の力だよ！",
+        "来年も一緒に輝こう！",
+        "努力は必ず報われるよ！",
+        "あなたの毎日がステージだよ！",
+        "笑顔でいれば、きっと大丈夫！",
+      ],
+    },
+  ],
+  kids: [
+    {
+      key: "kids",
+      name: "まめちゃん",
+      img: "/kids-mascot.png",
+      lines: [
+        "1年おこづかい帳がんばったね！",
+        "えらい！おかし買えたかな？",
+        "また来年もいっしょにがんばろう！",
+        "おかねはたいせつにしようね！",
+        "ちょっとずつためてえらいね！",
+      ],
+    },
+  ],
+  senior: [
+    {
+      key: "senior",
+      name: "しげるさん",
+      img: "/senior-mascot.png",
+      lines: [
+        "1年お疲れさまでした。",
+        "健康も大事にしましょう。",
+        "年金や医療費も忘れずに。",
+        "無理せず、ゆっくり続けましょう。",
+        "困ったら家族やサポートに相談しましょう。",
+      ],
+    },
+  ],
+}
+
+
+import Image from "next/image"
+
+export default function AnnualReport({ transactions, currentMonth }: Props) {
+
+    // --- 追加: 子供・高齢者モード用 state/UI ---
+    const [kidsInput, setKidsInput] = useState<{ income: string; expense: string }>({ income: "", expense: "" })
+    function handleKidsAdd(type: "income"|"expense") {
+      const val = Number(kidsInput[type])
+      if (!val || val <= 0) return
+      const key = `kakeibo-kids-${type}`
+      const prev = Number(localStorage.getItem(key) || 0)
+      localStorage.setItem(key, String(prev + val))
+      setKidsInput(i => ({...i, [type]: ""}))
+      window.location.reload()
+    }
+    function handleKidsReset() {
+      localStorage.removeItem("kakeibo-kids-income")
+      localStorage.removeItem("kakeibo-kids-expense")
+      window.location.reload()
+    }
+    const [seniorInput, setSeniorInput] = useState<{medical: string, pension: string, living: string}>({medical: "", pension: "", living: ""})
+    function handleSeniorAdd(type: "medical"|"pension"|"living") {
+      const val = Number(seniorInput[type])
+      if (!val || val <= 0) return
+      const key = `kakeibo-senior-${type}`
+      const prev = Number(localStorage.getItem(key) || 0)
+      localStorage.setItem(key, String(prev + val))
+      setSeniorInput(i => ({...i, [type]: ""}))
+      window.location.reload()
+    }
+    function handleSeniorReset() {
+      localStorage.removeItem("kakeibo-senior-medical")
+      localStorage.removeItem("kakeibo-senior-pension")
+      localStorage.removeItem("kakeibo-senior-living")
+      window.location.reload()
+    }
+
+    // --- 既存のstate ---
+    const [mode, setMode] = useState<"normal"|"kids"|"senior">("normal")
+    const mascots = mascotsByMode[mode]
+    const [mascot, setMascot] = useState(mascots[0].key)
+    const mascotObj = mascots.find(m => m.key === mascot) || mascots[0]
+    function randomLine() {
+      const arr = mascotObj.lines
+      return arr[Math.floor(Math.random() * arr.length)]
+    }
+    const [mascotLine, setMascotLine] = useState(randomLine())
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [aiReport, setAiReport] = useState<any>(null)
+    const [loading, setLoading] = useState(false)
+    const [pdfLoading, setPdfLoading] = useState(false)
+
+    // --- useMemo: 子供・高齢者サマリ ---
+    const kidsSummary = useMemo(() => {
+      if (mode !== "kids") return null
+      const categories = ["おこづかい", "おやつ", "おもちゃ"]
+      let totalIncome = 0, totalExpense = 0
+      transactions.forEach((t: Transaction) => {
+        if (categories.includes(t.category || "")) {
+          if (t.type === "income") totalIncome += t.amount
+          if (t.type === "expense") totalExpense += t.amount
+        }
+      })
+      totalIncome += Number(localStorage.getItem("kakeibo-kids-income") || 0)
+      totalExpense += Number(localStorage.getItem("kakeibo-kids-expense") || 0)
+      return { totalIncome, totalExpense, balance: totalIncome - totalExpense }
+    }, [mode, transactions])
+
+    const seniorSummary = useMemo(() => {
+      if (mode !== "senior") return null
+      let medical = 0, pension = 0, living = 0
+      transactions.forEach((t: Transaction) => {
+        if ((t.category || "") === "医療費") medical += t.amount
+        if ((t.category || "") === "年金") pension += t.amount
+        if (["生活費", "食費", "光熱費"].includes(t.category || "")) living += t.amount
+      })
+      medical += Number(localStorage.getItem("kakeibo-senior-medical") || 0)
+      pension += Number(localStorage.getItem("kakeibo-senior-pension") || 0)
+      living += Number(localStorage.getItem("kakeibo-senior-living") || 0)
+      return { medical, pension, living }
+    }, [mode, transactions])
+    // --- ここから下の重複state/関数/サマリは全て削除 ---
+
+
+  // --- 既存のuseMemo ---
   const monthlyData = useMemo(() => {
     const now = new Date(currentMonth + "-01")
     return Array.from({ length: 12 }, (_, i) => {
@@ -50,14 +211,31 @@ export default function AnnualReport({ transactions, currentMonth }: Props) {
   async function fetchAiReport() {
     setLoading(true)
     try {
+      // モードごとにデータを分岐
+      let data = monthlyData
+      if (mode === "kids") {
+        // 子供向け: おこづかい/おやつ/おもちゃカテゴリのみ
+        data = monthlyData.map(m => ({
+          ...m,
+          income: m.income,
+          expense: m.expense,
+          saving: m.saving,
+          investment: m.investment,
+          savingRate: m.savingRate,
+        }))
+      } else if (mode === "senior") {
+        // 高齢者: 医療費・年金・生活費カテゴリを強調（ここでは全体渡す）
+        data = monthlyData
+      }
       const res = await fetch("/api/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "annual", data: { monthlyData } }),
+        body: JSON.stringify({ type: "annual", data: { monthlyData: data }, mode }),
       })
       const { result } = await res.json()
       const parsed = JSON.parse(result.replace(/```json|```/g, "").trim())
       setAiReport(parsed)
+      setMascotLine(randomLine())
     } catch {
       alert("AI分析に失敗しました")
     } finally {
@@ -129,12 +307,131 @@ export default function AnnualReport({ transactions, currentMonth }: Props) {
   }
 
   return (
-    <div className="animate-fade-in grid grid-cols-2 gap-2">
+    <div className="animate-fade-in grid grid-cols-1 md:grid-cols-2 gap-2">
+      {/* キャラクター選択・吹き出し */}
+      <div className="col-span-1 md:col-span-2 mb-2">
+        <div className="flex gap-3 items-center flex-wrap mb-2">
+          <span className="text-slate-300 font-bold">モード:</span>
+          {[
+            { key: "normal", label: "通常" },
+            { key: "kids", label: "子供" },
+            { key: "senior", label: "高齢者" },
+          ].map(m => (
+            <button
+              key={m.key}
+              className={`px-3 py-1 rounded-lg font-bold text-sm border-2 ${mode === m.key ? "border-emerald-400 bg-emerald-900/30 text-emerald-200" : "border-slate-700 bg-slate-700 text-slate-300"}`}
+              onClick={() => {
+                setMode(m.key as "normal"|"kids"|"senior")
+                const nextMascots = mascotsByMode[m.key as keyof typeof mascotsByMode]
+                setMascot(nextMascots[0].key)
+                setMascotLine(nextMascots[0].lines[Math.floor(Math.random() * nextMascots[0].lines.length)])
+              }}
+              disabled={loading}
+            >{m.label}</button>
+          ))}
+        </div>
+        <div className="flex gap-3 items-center flex-wrap mb-2">
+          <span className="text-slate-300 font-bold">キャラクター:</span>
+          {mascots.map(m => (
+            <button
+              key={m.key}
+              className={`flex items-center gap-1 px-3 py-1 rounded-lg font-bold text-sm border-2 shadow-lg transition-all duration-200 ${mascot === m.key ? "border-pink-400 bg-pink-900/30 text-pink-200 scale-105 ring-2 ring-pink-300" : "border-slate-700 bg-slate-700 text-slate-300 hover:scale-105 hover:ring-1 hover:ring-pink-200"}`}
+              onClick={() => { setMascot(m.key); setMascotLine(m.lines[Math.floor(Math.random() * m.lines.length)]) }}
+              disabled={loading}
+            >
+              <Image
+                src={m.img}
+                alt={m.name}
+                width={24}
+                height={24}
+                className="w-6 h-6 rounded-full border border-white bg-white"
+                onError={e => {
+                  (e.target as HTMLImageElement).src = "/girl-mascot.png"
+                }}
+              />
+              {m.name}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-3 bg-slate-900/80 rounded-xl p-3 border border-pink-400/40 shadow-lg">
+          <Image
+            src={mascotObj.img}
+            alt={mascotObj.name}
+            width={48}
+            height={48}
+            className="w-12 h-12 rounded-full border-2 border-pink-300 bg-white"
+            onError={e => {
+              (e.target as HTMLImageElement).src = "/girl-mascot.png"
+            }}
+          />
+          <div>
+            <div className="font-bold text-pink-200 text-sm mb-1">{mascotObj.name}のひとこと</div>
+            <div className="text-pink-100 text-xs">{mascotLine}</div>
+          </div>
+        </div>
+      </div>
 
       {/* 左カラム: サマリ + AI総評 + エクスポート */}
       <div className="flex flex-col gap-2">
 
         {/* 年間サマリ */}
+        {mode === "kids" && kidsSummary && (
+          <div className="bg-yellow-900/30 border border-yellow-600/40 rounded-2xl p-4 mb-2">
+            <h3 className="text-sm font-semibold text-yellow-300 mb-2">🧒 おこづかい帳サマリ</h3>
+            <div className="flex flex-col gap-1 text-xs mb-2">
+              <span>もらった合計: <span className="font-bold text-emerald-400">{formatCurrency(kidsSummary.totalIncome)}</span></span>
+              <span>使った合計: <span className="font-bold text-red-400">{formatCurrency(kidsSummary.totalExpense)}</span></span>
+              <span>のこり: <span className="font-bold text-blue-400">{formatCurrency(kidsSummary.balance)}</span></span>
+            </div>
+            {/* 簡易入力UI */}
+            <div className="flex gap-2 items-end mb-1">
+              <div>
+                <label className="text-xs text-yellow-200">おこづかい追加</label>
+                <input type="number" min="1" value={kidsInput.income} onChange={e=>setKidsInput(i=>({...i,income:e.target.value}))} className="ml-1 px-2 py-1 rounded bg-yellow-50 text-yellow-900 w-24" />
+                <button onClick={()=>handleKidsAdd("income")} className="ml-1 px-2 py-1 rounded bg-emerald-500 text-white">追加</button>
+              </div>
+              <div>
+                <label className="text-xs text-yellow-200">使った</label>
+                <input type="number" min="1" value={kidsInput.expense} onChange={e=>setKidsInput(i=>({...i,expense:e.target.value}))} className="ml-1 px-2 py-1 rounded bg-yellow-50 text-yellow-900 w-24" />
+                <button onClick={()=>handleKidsAdd("expense")} className="ml-1 px-2 py-1 rounded bg-red-500 text-white">記録</button>
+              </div>
+              <button onClick={handleKidsReset} className="ml-2 px-2 py-1 rounded bg-yellow-500 text-white text-xs">リセット</button>
+            </div>
+            <div className="text-xs text-yellow-100 mt-1">※簡易入力はページ再読込で反映・リセットボタンで初期化できます</div>
+            <div className="text-xs text-yellow-200 mt-1">おこづかい帳は「もらった」「つかった」を記録して、のこりを確認できるよ！<br/>おかねはたいせつに、すこしずつためてみよう！</div>
+          </div>
+        )}
+        {mode === "senior" && seniorSummary && (
+          <div className="bg-blue-900/30 border border-blue-600/40 rounded-2xl p-4 mb-2">
+            <h3 className="text-sm font-semibold text-blue-300 mb-2">👴 高齢者向けサマリ</h3>
+            <div className="flex flex-col gap-1 text-xs mb-2">
+              <span>医療費合計: <span className="font-bold text-pink-400">{formatCurrency(seniorSummary.medical)}</span></span>
+              <span>年金収入合計: <span className="font-bold text-emerald-400">{formatCurrency(seniorSummary.pension)}</span></span>
+              <span>生活費合計: <span className="font-bold text-blue-400">{formatCurrency(seniorSummary.living)}</span></span>
+            </div>
+            {/* 簡易入力UI */}
+            <div className="flex gap-2 items-end mb-1">
+              <div>
+                <label className="text-xs text-blue-200">医療費</label>
+                <input type="number" min="1" value={seniorInput.medical} onChange={e=>setSeniorInput(i=>({...i,medical:e.target.value}))} className="ml-1 px-2 py-1 rounded bg-blue-50 text-blue-900 w-24" />
+                <button onClick={()=>handleSeniorAdd("medical")} className="ml-1 px-2 py-1 rounded bg-pink-500 text-white">追加</button>
+              </div>
+              <div>
+                <label className="text-xs text-blue-200">年金</label>
+                <input type="number" min="1" value={seniorInput.pension} onChange={e=>setSeniorInput(i=>({...i,pension:e.target.value}))} className="ml-1 px-2 py-1 rounded bg-blue-50 text-blue-900 w-24" />
+                <button onClick={()=>handleSeniorAdd("pension")} className="ml-1 px-2 py-1 rounded bg-emerald-500 text-white">追加</button>
+              </div>
+              <div>
+                <label className="text-xs text-blue-200">生活費</label>
+                <input type="number" min="1" value={seniorInput.living} onChange={e=>setSeniorInput(i=>({...i,living:e.target.value}))} className="ml-1 px-2 py-1 rounded bg-blue-50 text-blue-900 w-24" />
+                <button onClick={()=>handleSeniorAdd("living")} className="ml-1 px-2 py-1 rounded bg-blue-500 text-white">追加</button>
+              </div>
+              <button onClick={handleSeniorReset} className="ml-2 px-2 py-1 rounded bg-blue-500 text-white text-xs">リセット</button>
+            </div>
+            <div className="text-xs text-blue-100 mt-1">※簡易入力はページ再読込で反映・リセットボタンで初期化できます</div>
+            <div className="text-xs text-blue-200 mt-1">医療費・年金・生活費を記録して、毎月の支出や収入を見える化できます。<br/>健康や生活の安心のために、定期的に記録しましょう。</div>
+          </div>
+        )}
         <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4">
           <h3 className="text-sm font-semibold text-slate-300 mb-3">📊 年間サマリ</h3>
           <div className="grid grid-cols-2 gap-2">
