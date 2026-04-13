@@ -620,23 +620,23 @@ export default function Dashboard({
         </div>
 
         <div className="space-y-3">
-          <div className="board-card border shadow-sm h-full rounded-[28px] p-4 bg-white">
+          <div className="board-card border shadow-sm h-full rounded-[28px] p-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-extrabold text-black drop-shadow-[0_2px_0_rgba(0,0,0,0.22)]">{lang === "en" ? "Safety and lifestyle" : "安全度と生活レベル"}</h3>
-              <span className="text-xl font-extrabold text-black drop-shadow-[0_1px_0_rgba(0,0,0,0.18)]">{defenseProgress}%</span>
+              <h3 className="text-lg font-extrabold text-slate-950">{lang === "en" ? "Safety and lifestyle" : "安全度と生活レベル"}</h3>
+              <span className="text-xl font-extrabold text-slate-950">{defenseProgress}%</span>
             </div>
-            <p className={`mt-3 text-xl font-extrabold ${safetyRating.tone} drop-shadow-[0_2px_0_rgba(0,0,0,0.22)]`}>{safetyRating.label}</p>
-            <p className="mt-1 text-base font-bold text-black drop-shadow-[0_1px_0_rgba(0,0,0,0.12)]">{safetyRating.note}</p>
-            <div className="board-tile border mt-4 rounded-2xl p-3 bg-white">
-              <p className="text-base font-extrabold text-black drop-shadow-[0_1px_0_rgba(0,0,0,0.18)]">{lang === "en" ? "Living level" : "生活レベル"}</p>
-              <p className={`mt-1 text-lg font-extrabold drop-shadow-[0_2px_0_rgba(0,0,0,0.22)] ${lifeLevel.tone}`}>{lifeLevel.label}</p>
-              <p className="mt-1 text-base font-bold text-black drop-shadow-[0_1px_0_rgba(0,0,0,0.12)]">{lifeLevel.note}</p>
+            <p className={`mt-3 text-xl font-extrabold ${safetyRating.tone}`}>{safetyRating.label}</p>
+            <p className="mt-1 text-sm font-semibold text-slate-700">{safetyRating.note}</p>
+            <div className="board-tile border mt-4 rounded-2xl p-3">
+              <p className="text-base font-extrabold text-slate-950">{lang === "en" ? "Living level" : "生活レベル"}</p>
+              <p className={`mt-1 text-lg font-extrabold ${lifeLevel.tone}`}>{lifeLevel.label}</p>
+              <p className="mt-1 text-sm font-semibold text-slate-700">{lifeLevel.note}</p>
             </div>
             <div className="mt-4 h-3 rounded-full bg-cyan-100">
               <div className="h-3 rounded-full bg-cyan-400" style={{ width: `${defenseProgress}%` }} />
             </div>
-            <p className="mt-3 text-base font-extrabold text-black drop-shadow-[0_1px_0_rgba(0,0,0,0.18)]">{formatCurrency(stats.reserveStock)} / {formatCurrency(defenseGoal)}</p>
-            <p className="mt-1 text-base font-bold text-black drop-shadow-[0_1px_0_rgba(0,0,0,0.12)]">
+            <p className="mt-3 text-base font-extrabold text-slate-950">{formatCurrency(stats.reserveStock)} / {formatCurrency(defenseGoal)}</p>
+            <p className="mt-1 text-sm font-semibold text-slate-700">
               {lang === "en" ? "Calculated from current saving goal or six months of expenses." : "現在の貯蓄目標、または支出6か月分を基準に計算しています。"}
             </p>
 
@@ -655,7 +655,7 @@ export default function Dashboard({
                 {categoryAllocationView.map((row) => {
                   const pct = row.targetAmount > 0 ? Math.min(100, Math.round((row.actualAmount / row.targetAmount) * 100)) : 0;
                   return (
-                    <div key={row.category} className="board-tile border rounded-2xl p-3 bg-white">
+                    <div key={row.category} className="board-tile border rounded-2xl p-3">
                       <div className="flex items-center justify-between gap-3 text-sm">
                         <span className="font-bold text-black">{getBudgetCategoryLabel(row.category, lang)}</span>
                         <span className="rounded-full bg-cyan-100 px-2.5 py-1 font-black text-black">{formatCurrency(row.targetAmount)}</span>
