@@ -509,18 +509,20 @@ export default function Dashboard({
       return {
         label: lang === "en" ? "Safe" : "安全",
         note: lang === "en" ? "Your household pace is stable." : "家計の流れはかなり安定しています。",
+        color: '#16a34a',
       };
     }
     if (stats.balance >= 0 && stats.savingRate >= 10) {
       return {
         label: lang === "en" ? "Watch" : "注意",
         note: lang === "en" ? "Stable, but keep watching fixed costs and reserves." : "大きくは崩れていませんが、固定費と備えは要チェックです。",
+        color: '#000000',
       };
     }
     return {
       label: lang === "en" ? "Risk" : "要改善",
       note: lang === "en" ? "Balance or savings pace needs attention." : "差額か貯蓄ペースに改善余地があります。",
-      isRisk: true,
+      color: '#dc2626',
     };
   }, [lang, stats.balance, stats.expense, stats.reserveStock, stats.savingRate]);
 
@@ -620,7 +622,7 @@ export default function Dashboard({
               <h3 className="text-lg font-extrabold text-slate-950">{lang === "en" ? "Safety and lifestyle" : "安全度と生活レベル"}</h3>
               <span className="text-xl font-extrabold text-slate-950">{defenseProgress}%</span>
             </div>
-            <p className="mt-3 text-xl font-black" style={{ color: safetyRating.isRisk ? '#dc2626' : '#000000' }}>{safetyRating.label}</p>
+            <p className="mt-3 text-xl font-black" style={{ color: safetyRating.color }}>{safetyRating.label}</p>
             <p className="mt-1 text-base font-extrabold text-black">{safetyRating.note}</p>
             <div className="board-tile border mt-4 rounded-2xl p-3">
               <p className="text-base font-extrabold text-black">{lang === "en" ? "Living level" : "生活レベル"}</p>
