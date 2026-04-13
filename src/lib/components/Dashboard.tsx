@@ -626,17 +626,17 @@ export default function Dashboard({
               <span className="text-xl font-extrabold text-slate-950">{defenseProgress}%</span>
             </div>
             <p className={`mt-3 text-xl font-black ${safetyRating.tone}`}>{safetyRating.label}</p>
-            <p className="mt-1 text-sm font-bold text-slate-950">{safetyRating.note}</p>
+            <p className="mt-1 text-sm font-extrabold text-black">{safetyRating.note}</p>
             <div className="board-tile border mt-4 rounded-2xl p-3">
-              <p className="text-base font-extrabold text-slate-950">{lang === "en" ? "Living level" : "生活レベル"}</p>
+              <p className="text-base font-extrabold text-black">{lang === "en" ? "Living level" : "生活レベル"}</p>
               <p className={`mt-1 text-lg font-black ${lifeLevel.tone}`}>{lifeLevel.label}</p>
-              <p className="mt-1 text-sm font-bold text-slate-950">{lifeLevel.note}</p>
+              <p className="mt-1 text-sm font-extrabold text-black">{lifeLevel.note}</p>
             </div>
             <div className="mt-4 h-3 rounded-full bg-cyan-100">
               <div className="h-3 rounded-full bg-cyan-400" style={{ width: `${defenseProgress}%` }} />
             </div>
-            <p className="mt-3 text-base font-extrabold text-slate-950">{formatCurrency(stats.reserveStock)} / {formatCurrency(defenseGoal)}</p>
-            <p className="mt-1 text-sm font-bold text-slate-950">
+            <p className="mt-3 text-base font-extrabold text-black">{formatCurrency(stats.reserveStock)} / {formatCurrency(defenseGoal)}</p>
+            <p className="mt-1 text-sm font-extrabold text-black">
               {lang === "en" ? "Calculated from current saving goal or six months of expenses." : "現在の貯蓄目標、または支出6か月分を基準に計算しています。"}
             </p>
 
