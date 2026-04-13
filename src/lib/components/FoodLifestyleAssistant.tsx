@@ -424,7 +424,7 @@ export default function FoodLifestyleAssistant({
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <h3 className="text-base font-black text-slate-950">{t("\u0041\u0049\u98df\u4e8b\u30a2\u30b7\u30b9\u30c8", "Food AI assistant")}</h3>
-          <p className="mt-1 text-sm font-extrabold text-black">
+          <p style={{ marginTop: '0.25rem', fontSize: '0.875rem', fontWeight: 800, color: '#000000' }}>
             {t("\u98df\u6750\u3092\u307e\u3068\u3081\u3066\u5165\u308c\u308b\u3068\u3001\u307e\u305a\u3059\u3050\u5019\u88dc\u3092\u51fa\u3057\u3001\u305d\u306e\u5f8c\u306b AI \u306e\u63d0\u6848\u3067\u66f4\u65b0\u3057\u307e\u3059\u3002", "Add pantry items to get instant local recipes first, then refine them with AI.")}
           </p>
         </div>

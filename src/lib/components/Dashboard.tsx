@@ -619,21 +619,21 @@ export default function Dashboard({
         <div className="space-y-3">
           <div className="board-card border shadow-sm h-full rounded-[28px] p-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-extrabold text-slate-950">{lang === "en" ? "Safety and lifestyle" : "安全度と生活レベル"}</h3>
-              <span className="text-xl font-extrabold text-slate-950">{defenseProgress}%</span>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 900, color: '#000000', margin: 0 }}>{lang === "en" ? "Safety and lifestyle" : "安全度と生活レベル"}</h3>
+              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#000000' }}>{defenseProgress}%</span>
             </div>
-            <p className="mt-3 text-xl font-black" style={{ color: safetyRating.color }}>{safetyRating.label}</p>
-            <p className="mt-1 text-base font-extrabold text-black">{safetyRating.note}</p>
+            <p style={{ marginTop: '0.75rem', fontSize: '1.25rem', fontWeight: 900, color: safetyRating.color }}>{safetyRating.label}</p>
+            <p style={{ marginTop: '0.25rem', fontSize: '1rem', fontWeight: 800, color: '#000000' }}>{safetyRating.note}</p>
             <div className="board-tile border mt-4 rounded-2xl p-3">
-              <p className="text-base font-extrabold text-black">{lang === "en" ? "Living level" : "生活レベル"}</p>
-              <p className="mt-1 text-lg font-black text-black">{lifeLevel.label}</p>
-              <p className="mt-1 text-base font-extrabold text-black">{lifeLevel.note}</p>
+              <p style={{ fontSize: '1rem', fontWeight: 900, color: '#000000' }}>{lang === "en" ? "Living level" : "生活レベル"}</p>
+              <p style={{ marginTop: '0.25rem', fontSize: '1.125rem', fontWeight: 900, color: '#000000' }}>{lifeLevel.label}</p>
+              <p style={{ marginTop: '0.25rem', fontSize: '1rem', fontWeight: 800, color: '#000000' }}>{lifeLevel.note}</p>
             </div>
             <div className="mt-4 h-3 rounded-full bg-cyan-100">
               <div className="h-3 rounded-full bg-cyan-400" style={{ width: `${defenseProgress}%` }} />
             </div>
-            <p className="mt-3 text-base font-extrabold text-black">{formatCurrency(stats.reserveStock)} / {formatCurrency(defenseGoal)}</p>
-            <p className="mt-1 text-base font-extrabold text-black">
+            <p style={{ marginTop: '0.75rem', fontSize: '1rem', fontWeight: 900, color: '#000000' }}>{formatCurrency(stats.reserveStock)} / {formatCurrency(defenseGoal)}</p>
+            <p style={{ marginTop: '0.25rem', fontSize: '1rem', fontWeight: 800, color: '#000000' }}>
               {lang === "en" ? "Calculated from current saving goal or six months of expenses." : "現在の貯蓄目標、または支出6か月分を基準に計算しています。"}
             </p>
 
