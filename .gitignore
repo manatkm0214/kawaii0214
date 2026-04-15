@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local dev artifacts
+.next-dev.log
+.next-dev.err
+next.config.ts.bak
+next.config.ts.disabled
