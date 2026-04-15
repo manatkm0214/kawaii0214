@@ -357,9 +357,9 @@ export default function InputBoardCustomize() {
 
         {dataLoading ? (
           <p className="mt-4 text-xs text-slate-400">{t("読み込み中...", "Loading...")}</p>
-        ) : metrics.income === 0 ? (
+        ) : metrics.income === 0 && metrics.expense === 0 ? (
           <p className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs text-amber-700">
-            {t("今月の収入データがありません。入力すると自動で更新されます。", "No income data for this month. Data updates automatically after input.")}
+            {t("今月のデータがありません。入力すると自動で更新されます。", "No data for this month. Data updates automatically after input.")}
           </p>
         ) : (
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
