@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (adminResult.error) {
-      return NextResponse.json({ error: `Resend error: ${adminResult.error.name} - ${adminResult.error.message}` }, { status: 500 })
+      return NextResponse.json({ error: "お問い合わせの送信に失敗しました。" }, { status: 500 })
     }
 
     // 自動返信は失敗してもエラーにしない（送信元ドメインの制限がある場合があるため）
