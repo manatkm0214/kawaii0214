@@ -88,7 +88,7 @@ export default function ContactPage() {
           <div className="flex flex-col items-center text-center">
             <LogoImage />
             <p className="mt-5 text-xs uppercase tracking-[0.32em] text-cyan-300/80">{t("お問い合わせ", "Contact")}</p>
-            <h1 className="mt-3 text-3xl font-bold text-white">{t("お問い合わせフォーム", "Contact Form")}</h1>
+            <h1 className="mt-3 text-3xl font-bold text-white">{t("かわいい家計簿", "Kawaii Kakeibo")}</h1>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
               {t(
                 "不具合の報告、ご要望、改善してほしい点をこちらから送れます。内容を確認してから返信します。",
