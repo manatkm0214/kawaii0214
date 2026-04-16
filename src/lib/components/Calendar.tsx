@@ -83,6 +83,18 @@ function shortCurrency(value: number) {
   return String(value)
 }
 
+function parseCalendarAIResult(raw: string): CalendarAIResult {
+  const stripped = raw.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim()
+  const start = stripped.indexOf("{")
+  const end = stripped.lastIndexOf("}")
+  const jsonStr = start >= 0 && end > start ? stripped.slice(start, end + 1) : stripped
+  try {
+    return JSON.parse(jsonStr) as CalendarAIResult
+  } catch {
+    throw new Error("AI response could not be parsed.")
+  }
+}
+
 export default function Calendar({ transactions, currentMonth }: Props) {
   const lang = useLang()
   const aiProvider = useAIProvider()
@@ -268,7 +280,7 @@ export default function Calendar({ transactions, currentMonth }: Props) {
 
       const json = await response.json()
       if (!response.ok) throw new Error(json.error ?? t("AI分析に失敗しました。", "AI analysis failed."))
-      const parsed = typeof json.result === "string" ? (JSON.parse(json.result) as CalendarAIResult) : (json.result as CalendarAIResult)
+      const parsed = typeof json.result === "string" ? parseCalendarAIResult(json.result) : (json.result as CalendarAIResult)
       setAiResult(parsed)
       setShowAI(true)
     } catch (error) {

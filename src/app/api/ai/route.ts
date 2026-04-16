@@ -274,7 +274,7 @@ async function requestOpenAI(prompt: string): Promise<ProviderResponse> {
 
 async function requestGemini(prompt: string): Promise<ProviderResponse> {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
-  const model = process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
+  const model = process.env.GEMINI_MODEL?.trim() || "gemini-2.0-flash";
   if (!apiKey) throw new Error("GEMINI_API_KEY is not configured.");
 
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
@@ -289,15 +289,17 @@ async function requestGemini(prompt: string): Promise<ProviderResponse> {
   const parsed = raw as {
     candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
   };
-  const text =
+  const rawText =
     parsed.candidates?.[0]?.content?.parts
       ?.map((part) => part.text ?? "")
       .join("")
       .trim() ?? "";
 
-  if (!response.ok || !text) {
+  if (!response.ok || !rawText) {
     throw new Error(extractErrorMessage(raw) || "Gemini response could not be generated.");
   }
+
+  const text = rawText.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim();
 
   return { text, provider: "gemini" };
 }
@@ -367,7 +369,7 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json(
-    { error: errors[0] || "AI response could not be generated." },
+    { error: errors.join(" / ") || "AI response could not be generated." },
     { status: 502 },
   );
 }

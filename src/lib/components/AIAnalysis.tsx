@@ -90,17 +90,14 @@ type ApplySuggestion = {
 
 function parseJsonBlock<T>(value: string): T | null {
   if (!value.trim()) return null;
+  const stripped = value.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+  const start = stripped.indexOf("{");
+  const end = stripped.lastIndexOf("}");
+  const jsonStr = start >= 0 && end > start ? stripped.slice(start, end + 1) : stripped;
   try {
-    return JSON.parse(value) as T;
+    return JSON.parse(jsonStr) as T;
   } catch {
-    const start = value.indexOf("{");
-    const end = value.lastIndexOf("}");
-    if (start < 0 || end <= start) return null;
-    try {
-      return JSON.parse(value.slice(start, end + 1)) as T;
-    } catch {
-      return null;
-    }
+    return null;
   }
 }
 

@@ -973,6 +973,9 @@ export default function Home() {
                 <button type="button" onClick={() => setShowPresetSetup(true)} className="rounded-full bg-[linear-gradient(135deg,#ec4899_0%,#f97316_45%,#38bdf8_100%)] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(236,72,153,0.22)] transition hover:brightness-105">
                   {lang === "en" ? "Apply preset to board" : "配分プリセットをボードへ反映"}
                 </button>
+                <button type="button" onClick={handleSignOut} className="app-chip">
+                  {lang === "en" ? "Back to start" : "最初のはじめるに戻る"}
+                </button>
               </div>
               <p className="garden-copy mt-3 max-w-3xl text-sm md:text-base">
                 {lang === "en"

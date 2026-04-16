@@ -67,7 +67,10 @@ function detectMode(params: { savingRate: number; balance: number; expenseRatio:
 }
 
 function stripCodeFence(text: string): string {
-  return text.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
+  const stripped = text.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+  const start = stripped.indexOf("{");
+  const end = stripped.lastIndexOf("}");
+  return start >= 0 && end > start ? stripped.slice(start, end + 1) : stripped;
 }
 
 function normalizeLevel(level: unknown): LifestyleMode {
@@ -304,6 +307,7 @@ export default function FoodLifestyleAssistant({
   const [expiresInDays, setExpiresInDays] = useState("");
   const [result, setResult] = useState<AssistantResponse>(FALLBACK_RESPONSE[locale]);
   const [loading, setLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
 
   useEffect(() => {
     setResult(FALLBACK_RESPONSE[locale]);
@@ -337,6 +341,7 @@ export default function FoodLifestyleAssistant({
 
       const local = buildLocalResponse(nextItems, locale, mode);
       setResult(local);
+      setAiError("");
       setLoading(true);
 
       try {
@@ -363,16 +368,17 @@ export default function FoodLifestyleAssistant({
 
         const payload = (await response.json()) as { error?: string; result?: string };
         if (!response.ok || !payload.result) {
-          throw new Error("AI response missing");
+          throw new Error(payload.error ?? t("AI応答を取得できませんでした", "Could not get AI response"));
         }
 
         setResult(parseAssistantResponse(payload.result, locale));
-      } catch {
+      } catch (e) {
+        setAiError(e instanceof Error ? e.message : t("AIレシピの取得に失敗しました", "Failed to get AI recipes"));
       } finally {
         setLoading(false);
       }
     },
-    [aiProvider, currentMonth, lang, locale, mode, stats],
+    [aiProvider, currentMonth, lang, locale, mode, stats, t],
   );
 
   useEffect(() => {
@@ -417,6 +423,7 @@ export default function FoodLifestyleAssistant({
     setAmount("");
     setExpiresInDays("");
     setResult(FALLBACK_RESPONSE[locale]);
+    setAiError("");
   }
 
   return (
@@ -549,28 +556,41 @@ export default function FoodLifestyleAssistant({
               </div>
             </div>
 
+            {result.summary && (
+              <p className="mt-2 text-xs text-slate-700">{result.summary}</p>
+            )}
+
+            {aiError && (
+              <p className="mt-2 rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">
+                {aiError}
+              </p>
+            )}
+
             <div className="mt-3 space-y-2">
-                      {result.recipes.map((recipe) => (
-                        <div key={`${recipe.title}-${recipe.reason}`} className="rounded-2xl board-tile border p-3">
-                          <p className="text-sm font-extrabold text-black drop-shadow-[0_2px_0_rgba(0,0,0,0.65)]">{recipe.title}</p>
-                          {recipe.reason && (
-                            <p className="mt-1 text-xs text-slate-900">{recipe.reason}</p>
-                          )}
-                        </div>
-                      ))}
-                      {/* 生活提案カード（要改善→赤、良い→緑） */}
-                      {result.lifestyleSuggestions.map((card) => {
-                        // "要改善"や"improve"がタイトルやbudgetLabel/bodyに含まれる場合は赤、"良"や"good"が含まれる場合は緑
-                        const isWarning = card.title.includes("要改善") || card.body.includes("要改善") || card.budgetLabel.includes("要改善") || card.title.toLowerCase().includes("improve") || card.body.toLowerCase().includes("improve");
-                        const isGood = card.title.includes("良") || card.body.includes("良") || card.budgetLabel.includes("良") || card.title.toLowerCase().includes("good") || card.body.toLowerCase().includes("good");
-                        return (
-                          <div key={card.title + card.body} className="rounded-2xl board-tile border p-3">
-                            <p className={`text-sm font-extrabold drop-shadow-[0_2px_0_rgba(0,0,0,0.65)] ${isWarning ? 'text-red-600' : isGood ? 'text-emerald-600' : 'text-black'}`}>{card.title}</p>
-                            <p className="mt-1 text-xs text-slate-900">{card.body}</p>
-                            {card.budgetLabel && <span className="mt-1 inline-block text-xs font-bold text-black">{card.budgetLabel}</span>}
-                          </div>
-                        );
-                      })}
+              {result.recipes.length === 0 && items.length > 0 && !loading && (
+                <p className="text-xs text-slate-500">
+                  {t("今ある食材でのレシピ候補が見つかりませんでした。食材を追加するか「今すぐ更新」を押してAIに聞いてみてください。", "No local recipe matched your pantry. Add more items or tap Refresh now to ask AI.")}
+                </p>
+              )}
+              {result.recipes.map((recipe) => (
+                <div key={`${recipe.title}-${recipe.reason}`} className="rounded-2xl board-tile border p-3">
+                  <p className="text-sm font-extrabold text-black drop-shadow-[0_2px_0_rgba(0,0,0,0.65)]">{recipe.title}</p>
+                  {recipe.reason && (
+                    <p className="mt-1 text-xs text-slate-900">{recipe.reason}</p>
+                  )}
+                </div>
+              ))}
+              {result.lifestyleSuggestions.map((card) => {
+                const isWarning = card.title.includes("要改善") || card.body.includes("要改善") || card.budgetLabel.includes("要改善") || card.title.toLowerCase().includes("improve") || card.body.toLowerCase().includes("improve");
+                const isGood = card.title.includes("良") || card.body.includes("良") || card.budgetLabel.includes("良") || card.title.toLowerCase().includes("good") || card.body.toLowerCase().includes("good");
+                return (
+                  <div key={card.title + card.body} className="rounded-2xl board-tile border p-3">
+                    <p className={`text-sm font-extrabold drop-shadow-[0_2px_0_rgba(0,0,0,0.65)] ${isWarning ? 'text-red-600' : isGood ? 'text-emerald-600' : 'text-black'}`}>{card.title}</p>
+                    <p className="mt-1 text-xs text-slate-900">{card.body}</p>
+                    {card.budgetLabel && <span className="mt-1 inline-block text-xs font-bold text-black">{card.budgetLabel}</span>}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

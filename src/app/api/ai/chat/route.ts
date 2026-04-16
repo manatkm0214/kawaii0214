@@ -80,7 +80,7 @@ async function requestOpenAI(prompt: string) {
 
 async function requestGemini(prompt: string) {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
-  const model = process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
+  const model = process.env.GEMINI_MODEL?.trim() || "gemini-2.0-flash";
   if (!apiKey) throw new Error("GEMINI_API_KEY is not configured.");
 
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
@@ -96,10 +96,11 @@ async function requestGemini(prompt: string) {
     error?: { message?: string };
   };
 
-  const reply = raw.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("").trim();
-  if (!response.ok || !reply) {
+  const rawReply = raw.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("").trim();
+  if (!response.ok || !rawReply) {
     throw new Error(raw.error?.message || "Gemini chat response could not be generated.");
   }
+  const reply = rawReply.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim();
   return reply;
 }
 

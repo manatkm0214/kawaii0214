@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 type Provider = "openai" | "gemini";
 
@@ -48,33 +47,6 @@ function buildPrompt(body: RequestBody) {
     .join(" ");
 }
 
-function extractGeminiInlineData(response: unknown) {
-  if (!response || typeof response !== "object") return null;
-  const responseRecord = response as Record<string, unknown>;
-  const candidates = responseRecord.candidates;
-  if (!Array.isArray(candidates) || candidates.length === 0) return null;
-
-  const firstCandidate = candidates[0];
-  if (!firstCandidate || typeof firstCandidate !== "object") return null;
-  const content = (firstCandidate as Record<string, unknown>).content;
-  if (!content || typeof content !== "object") return null;
-  const parts = (content as Record<string, unknown>).parts;
-  if (!Array.isArray(parts)) return null;
-
-  for (const part of parts) {
-    if (!part || typeof part !== "object") continue;
-    const partRecord = part as Record<string, unknown>;
-    const inlineData = partRecord.inlineData;
-    if (!inlineData || typeof inlineData !== "object") continue;
-    const data = (inlineData as Record<string, unknown>).data;
-    const mimeType = (inlineData as Record<string, unknown>).mimeType;
-    if (typeof data === "string" && typeof mimeType === "string") {
-      return { data, mimeType };
-    }
-  }
-
-  return null;
-}
 
 async function generateWithOpenAI(prompt: string) {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
@@ -109,20 +81,39 @@ async function generateWithGemini(prompt: string) {
     throw new Error("GEMINI_API_KEY is not configured.");
   }
 
-  const client = new GoogleGenerativeAI(apiKey);
   const model = process.env.GEMINI_IMAGE_MODEL?.trim() || "gemini-3.1-flash-image-preview";
-  const generator = client.getGenerativeModel({ model });
-  const result = await generator.generateContent(prompt);
-  const inlineData = extractGeminiInlineData(result.response);
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-  if (!inlineData) {
-    throw new Error("Gemini did not return an image.");
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { responseModalities: ["IMAGE", "TEXT"] },
+    }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`Gemini API error ${response.status}: ${errorBody}`);
   }
 
-  return {
-    imageUrl: `data:${inlineData.mimeType};base64,${inlineData.data}`,
-    model,
+  const result = (await response.json()) as {
+    candidates?: Array<{
+      content?: { parts?: Array<{ inlineData?: { data?: string; mimeType?: string } }> };
+    }>;
   };
+
+  for (const part of result.candidates?.[0]?.content?.parts ?? []) {
+    if (part.inlineData?.data && part.inlineData.mimeType) {
+      return {
+        imageUrl: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
+        model,
+      };
+    }
+  }
+
+  throw new Error("Gemini did not return an image.");
 }
 
 function isOpenAIBillingLimitError(error: unknown) {

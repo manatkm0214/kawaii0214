@@ -23,21 +23,6 @@ type SavedDesign = {
   createdAt: number;
 };
 
-type GeneratedImage = {
-  id: string;
-  url: string;
-  provider: "gemini" | "openai";
-  prompt: string;
-};
-
-type DesignImageErrorCode =
-  | "OPENAI_BILLING_LIMIT"
-  | "OPENAI_CONFIG"
-  | "GEMINI_CONFIG"
-  | "OPENAI_NO_IMAGE"
-  | "GEMINI_NO_IMAGE"
-  | "IMAGE_GENERATION_FAILED";
-
 function readSavedDesigns(): SavedDesign[] {
   if (typeof window === "undefined") return [];
   try {
@@ -70,26 +55,6 @@ function applyBackground(id: string, value: string) {
 
 function makeDesignId(name: string) {
   return `${name.trim().toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`;
-}
-
-function mapDesignImageError(code: DesignImageErrorCode | undefined, t: (ja: string, en: string) => string, fallback: string) {
-  switch (code) {
-    case "OPENAI_BILLING_LIMIT":
-      return t(
-        "OpenAI の課金上限に達しているため画像生成できませんでした。Gemini を使うか、しばらくしてからもう一度お試しください。",
-        "OpenAI image generation is unavailable because the billing limit has been reached. Use Gemini or try again later.",
-      );
-    case "OPENAI_CONFIG":
-      return t("OpenAI の画像生成設定が見つかりません。", "OpenAI image generation is not configured.");
-    case "GEMINI_CONFIG":
-      return t("Gemini の画像生成設定が見つかりません。", "Gemini image generation is not configured.");
-    case "OPENAI_NO_IMAGE":
-      return t("OpenAI が画像を返せませんでした。もう一度お試しください。", "OpenAI could not return an image. Please try again.");
-    case "GEMINI_NO_IMAGE":
-      return t("Gemini が画像を返せませんでした。もう一度お試しください。", "Gemini could not return an image. Please try again.");
-    default:
-      return fallback;
-  }
 }
 
 function getImageExtension(url: string) {
@@ -141,14 +106,6 @@ type DesignStarterProps = {
 export default function DesignStarter({ onContinue, onBack, backLabel, continueLabel }: DesignStarterProps) {
   const lang = useLang();
   const t = (ja: string, en: string) => (lang === "en" ? en : ja);
-  const recommendedImagePrompt = t(
-    "半リアル寄りのかわいい女の子、自然な顔立ち、やわらかい肌の陰影、ふんわりした髪、リボンやフリルのある上品でかわいい服、やさしい笑顔、上半身ポートレート",
-    "semi-realistic cute girl with natural facial proportions, soft skin shading, fluffy detailed hair, ribbon and frill styling, warm gentle smile, bust-up portrait",
-  );
-  const plushImagePrompt = t(
-    "ふわふわのぬいぐるみマスコット、やさしい表情、布の質感、パステルカラー、リボン付き、かわいい正面寄りの上半身ポートレート",
-    "fluffy plush toy mascot with a gentle expression, soft fabric texture, pastel colors, ribbon accessory, cute centered bust-up portrait",
-  );
   const fileRef = useRef<HTMLInputElement>(null);
   const {
     characterUrl,
@@ -177,31 +134,12 @@ export default function DesignStarter({ onContinue, onBack, backLabel, continueL
   const [designName, setDesignName] = useState("");
   const [savedDesigns, setSavedDesigns] = useState<SavedDesign[]>(() => readSavedDesigns());
   const [status, setStatus] = useState("");
-  const [imagePrompt, setImagePrompt] = useState(() =>
-    t(
-      "半リアル寄りのかわいい女の子、自然な顔立ち、やわらかい肌の陰影、ふんわりした髪、リボンやフリルのある上品でかわいい服、やさしい笑顔、上半身ポートレート",
-      "semi-realistic cute girl with natural facial proportions, soft skin shading, fluffy detailed hair, ribbon and frill styling, warm gentle smile, bust-up portrait",
-    ),
-  );
-  const [imageProvider, setImageProvider] = useState<"gemini" | "openai">("gemini");
-  const [imageLoading, setImageLoading] = useState(false);
-  const [imageError, setImageError] = useState("");
-  const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
-
-  useEffect(() => {
-    setImagePrompt((current) => {
-      if (!current.trim()) return recommendedImagePrompt;
-      if (current.includes("shoujo-anime")) return recommendedImagePrompt;
-      if (current.includes("繧") || current.includes("縺")) return recommendedImagePrompt;
-      return current;
-    });
-  }, [imagePrompt, recommendedImagePrompt]);
 
   const previewUrl = urlInput || characterUrl;
   const previewName = nameInput || characterName;
   const progress = `${Math.round((step / 3) * 100)}%`;
   
-  function makeDownloadFilename(provider?: "gemini" | "openai") {
+  function makeDownloadFilename() {
     const rawBaseName = (previewName || t("かわいい家計簿", "cute-kakeibo"))
       .trim()
       .toLowerCase()
@@ -209,17 +147,16 @@ export default function DesignStarter({ onContinue, onBack, backLabel, continueL
       .replace(/-+/g, "-")
       .replace(/^-|-$/g, "");
     const baseName = rawBaseName || "cute-kakeibo";
-    const providerName = provider === "openai" ? "openai" : "gemini";
     const extension = getImageExtension(previewUrl || "");
-    return `${baseName}-${providerName}.${extension}`;
+    return `${baseName}.${extension}`;
   }
 
-  async function handleSaveImage(url: string, provider?: "gemini" | "openai") {
+  async function handleSaveImage(url: string) {
     try {
-      await downloadImageFile(url, makeDownloadFilename(provider));
+      await downloadImageFile(url, makeDownloadFilename());
       setStatus(t("画像を保存しました。", "Saved the image."));
     } catch (error) {
-      setImageError(
+      setStatus(
         error instanceof Error
           ? error.message
           : t("画像の保存に失敗しました。", "Could not save the image."),
@@ -279,75 +216,6 @@ export default function DesignStarter({ onContinue, onBack, backLabel, continueL
       setStatus(t("画像を読み込みました。", "Loaded the image."));
     };
     reader.readAsDataURL(file);
-  }
-
-  async function handleGenerateImage() {
-    if (!imagePrompt.trim()) {
-      setImageError(t("画像生成の説明を入れてください。", "Enter an image prompt first."));
-      return;
-    }
-
-    setImageLoading(true);
-    setImageError("");
-
-    try {
-      const response = await fetch("/api/design-image", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          provider: imageProvider,
-          prompt: imagePrompt.trim(),
-          characterName: nameInput.trim(),
-          theme,
-        }),
-      });
-
-      const payload = (await response.json()) as {
-        imageUrl?: string;
-        provider?: "gemini" | "openai";
-        requestedProvider?: "gemini" | "openai";
-        prompt?: string;
-        error?: string;
-        errorCode?: DesignImageErrorCode;
-        fallbackNotice?: string;
-      };
-
-      if (!response.ok || !payload.imageUrl) {
-        throw new Error(
-          mapDesignImageError(
-            payload.errorCode,
-            t,
-            payload.error || t("画像生成に失敗しました。", "Image generation failed."),
-          ),
-        );
-      }
-
-      const nextImage: GeneratedImage = {
-        id: `${payload.provider || imageProvider}-${Date.now()}`,
-        url: payload.imageUrl,
-        provider: payload.provider || imageProvider,
-        prompt: payload.prompt || imagePrompt.trim(),
-      };
-
-      setGeneratedImages((prev) => [nextImage, ...prev].slice(0, 6));
-      setUrlInput(payload.imageUrl);
-      setCharacterUrl(payload.imageUrl);
-      setStatus(
-        payload.fallbackNotice === "OPENAI_BILLING_LIMIT_FALLBACK_TO_GEMINI"
-          ? t(
-              "OpenAI の課金上限に達していたため、Gemini で画像を生成しました。画像は保存もできます。",
-              "OpenAI hit its billing limit, so Gemini generated the image instead. You can save the image too.",
-            )
-          : t(
-              "かわいい家計簿用の画像を生成して反映しました。画像は保存もできます。",
-              "Created a Cute Kakeibo image and applied it. You can save it too.",
-            ),
-      );
-    } catch (error) {
-      setImageError(error instanceof Error ? error.message : t("画像生成に失敗しました。", "Image generation failed."));
-    } finally {
-      setImageLoading(false);
-    }
   }
 
   function saveCurrentDesign() {
@@ -588,118 +456,26 @@ export default function DesignStarter({ onContinue, onBack, backLabel, continueL
                     placeholder={t("画像 URL", "Image URL")}
                     className="w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition focus:border-cyan-400"
                   />
-                  <div className="rounded-[24px] border border-slate-700 bg-slate-950 p-4">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <p className="text-sm font-semibold text-white">{t("かわいい家計簿AI画像", "Cute Kakeibo AI Image")}</p>
-                        <p className="mt-1 text-xs text-slate-400">
-                          {t("Gemini と OpenAI でキャラクター画像を作って、そのまま反映できます。", "Create a character image with Gemini or OpenAI and apply it right away.")}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        {([
-                          { key: "gemini", label: "Gemini" },
-                          { key: "openai", label: "OpenAI" },
-                        ] as const).map((option) => (
-                          <button
-                            key={option.key}
-                            type="button"
-                            onClick={() => setImageProvider(option.key)}
-                            className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
-                              imageProvider === option.key
-                                ? "bg-cyan-400 text-slate-950"
-                                : "border border-slate-600 bg-slate-900 text-slate-300 hover:border-slate-400"
-                            }`}
-                          >
-                            {option.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <textarea
-                      value={imagePrompt}
-                      onChange={(event) => setImagePrompt(event.target.value)}
-                      rows={3}
-                      placeholder={t("例: 半リアル寄りのかわいい女の子、やさしい笑顔、リボンやフリルのある服", "e.g. semi-realistic cute girl, warm smile, ribbon and frill styling")}
-                      className="mt-3 w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition focus:border-cyan-400"
-                    />
-
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setImagePrompt(recommendedImagePrompt)}
-                        className="app-chip"
-                      >
-                        {t("女の子向けおすすめ", "Use girl prompt")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setImagePrompt(plushImagePrompt)}
-                        className="app-chip"
-                      >
-                        {t("ぬいぐるみ向け", "Use plush prompt")}
-                      </button>
-                      <button type="button" onClick={handleGenerateImage} disabled={imageLoading} className="app-chip">
-                        {imageLoading ? t("生成中...", "Generating...") : t("かわいい家計簿AIで画像生成", "Create Cute Kakeibo image")}
-                      </button>
-                    </div>
-
-                    {imageError && <p className="mt-3 text-sm text-rose-300">{imageError}</p>}
-
-                    {generatedImages.length > 0 && (
-                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                        {generatedImages.map((image) => (
-                          <div
-                            key={image.id}
-                            className="overflow-hidden rounded-[22px] border border-slate-700 bg-slate-900 text-left transition hover:border-cyan-400"
-                          >
-                            <div className="relative h-36 w-full">
-                              <Image src={image.url} alt={image.prompt} fill className="object-cover" unoptimized />
-                            </div>
-                            <div className="p-3">
-                              <div className="flex items-center justify-between gap-2">
-                                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">{image.provider}</p>
-                                {image.provider === "gemini" && (
-                                  <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-300">
-                                    {t("保存OK", "Save OK")}
-                                  </span>
-                                )}
-                              </div>
-                              <p className="mt-2 line-clamp-2 text-xs text-slate-300">{image.prompt}</p>
-                              <div className="mt-3 flex flex-wrap gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setUrlInput(image.url);
-                                    setCharacterUrl(image.url);
-                                    setStatus(t("生成画像を反映しました。", "Applied the generated image."));
-                                  }}
-                                  className="app-chip"
-                                >
-                                  {t("適用", "Apply")}
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => void handleSaveImage(image.url, image.provider)}
-                                  className="app-chip"
-                                >
-                                  {t("画像を保存", "Save image")}
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
                   <div className="flex flex-wrap gap-2">
                     <button type="button" onClick={() => fileRef.current?.click()} className="app-chip">
                       {t("画像を選ぶ", "Choose image")}
                     </button>
                     {previewUrl && (
-                      <button type="button" onClick={() => void handleSaveImage(previewUrl, imageProvider)} className="app-chip">
+                      <button type="button" onClick={() => void handleSaveImage(previewUrl)} className="app-chip">
                         {t("現在の画像を保存", "Save current image")}
+                      </button>
+                    )}
+                    {previewUrl && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUrlInput("");
+                          setCharacterUrl("");
+                          setStatus(t("画像を消去しました。", "Cleared the image."));
+                        }}
+                        className="rounded-full border border-rose-800 bg-rose-950 px-3 py-1.5 text-xs font-semibold text-rose-300 transition hover:bg-rose-900"
+                      >
+                        {t("画像を消去", "Clear image")}
                       </button>
                     )}
                     <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
